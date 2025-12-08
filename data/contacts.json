@@ -1,0 +1,73 @@
+[
+  {
+    "name": "Raj",
+    "email": "raj@gmail.com",
+    "phone": "1234567890",
+    "subject": "Testing for Mail",
+    "message": "Text\" refers to written or printed words, or the body of a work as distinct from other material. It can also mean a short electronic message, a piece of written or digital content, or a passage from scripture. In literary theory, \"text\" is a broader concept referring to any object that can be \"read,\" such as a street sign, building arrangement, or clothing. ",
+    "attachment": "/uploads/contacts/1764851877712_sample_document.docx",
+    "id": "contact_1764851877734_xbprtxwug",
+    "status": "read",
+    "createdAt": "2025-12-04T12:37:57.734Z"
+  },
+  {
+    "name": "Milton",
+    "email": "Test@g.com",
+    "phone": "1234567890",
+    "subject": "test",
+    "message": "test",
+    "id": "contact_1764849512791_ix167wzlg",
+    "status": "read",
+    "createdAt": "2025-12-04T11:58:32.791Z"
+  },
+  {
+    "name": "Final Email Test",
+    "email": "final@test.com",
+    "phone": "1234567890",
+    "subject": "Testing Email After Restart",
+    "message": "This should send an email to chrixlinitsolutions@gmail.com after server restart with credentials loaded.",
+    "id": "contact_1764849168352_vxtmw5exw",
+    "status": "read",
+    "createdAt": "2025-12-04T11:52:48.353Z"
+  },
+  {
+    "name": "Console Email Test",
+    "email": "console@email.com",
+    "phone": "9876543210",
+    "subject": "Testing Email via Console",
+    "message": "This should send an email to chrixlinitsolutions@gmail.com",
+    "id": "contact_1764848900508_n9klf1vpf",
+    "status": "read",
+    "createdAt": "2025-12-04T11:48:20.509Z"
+  },
+  {
+    "name": "Console Test",
+    "email": "console@test.com",
+    "phone": "1234567890",
+    "subject": "Console Test Subject",
+    "message": "Testing from console",
+    "id": "contact_1764847697643_4zi7qoazg",
+    "status": "read",
+    "createdAt": "2025-12-04T11:28:17.644Z"
+  },
+  {
+    "name": "Test",
+    "email": "a@g.com",
+    "phone": "1111111111",
+    "subject": "demo",
+    "message": "hgvvv",
+    "id": "contact_1764845608674_thijjng1a",
+    "status": "read",
+    "createdAt": "2025-12-04T10:53:28.674Z"
+  },
+  {
+    "name": "Test User",
+    "email": "test@example.com",
+    "phone": "",
+    "subject": "Test Subject",
+    "message": "This is a test message.",
+    "id": "contact_1764845193817_os0fmy5gq",
+    "status": "read",
+    "createdAt": "2025-12-04T10:46:33.817Z"
+  }
+]
