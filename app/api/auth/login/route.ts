@@ -41,10 +41,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // DEBUGGING BLOCK - REMOVE BEFORE PRODUCTION
+        console.log('Login attempt for:', email);
+        console.log('Env Email:', adminEmail);
+        console.log('Env Hash exists:', !!adminPasswordHash);
+
         // Verify email
         if (email !== adminEmail) {
             return NextResponse.json(
-                { error: 'Invalid credentials' },
+                { error: `Debug: Email mismatch. Expected ${adminEmail}, got ${email}` },
                 { status: 401 }
             );
         }
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
         const isValidPassword = await comparePassword(password, adminPasswordHash);
         if (!isValidPassword) {
             return NextResponse.json(
-                { error: 'Invalid credentials' },
+                { error: 'Debug: Password verification failed' },
                 { status: 401 }
             );
         }
