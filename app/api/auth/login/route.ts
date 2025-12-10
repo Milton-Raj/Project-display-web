@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         const isValidPassword = await comparePassword(password, adminPasswordHash);
         if (!isValidPassword) {
             return NextResponse.json(
-                { error: 'Debug: Password verification failed' },
+                { error: `Debug: Password verification failed. Hash len: ${adminPasswordHash.length}, Starts: ${adminPasswordHash.substring(0, 10)}, Ends: ${adminPasswordHash.substring(adminPasswordHash.length - 10)}` },
                 { status: 401 }
             );
         }
