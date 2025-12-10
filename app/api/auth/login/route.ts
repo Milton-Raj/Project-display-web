@@ -28,31 +28,30 @@ export async function POST(request: NextRequest) {
             // Fall back to env variables if JSON file doesn't exist
             adminData = {
                 email: process.env.ADMIN_EMAIL || 'admin@admin.com',
-                passwordHash: process.env.ADMIN_PASSWORD_HASH || '$2b$10$zMLr65LDx0yN3UFZaxaCbeiO5VL4H7qc/WtpbCjms9DJOxXK6oKJ2', // Hardcoded fallback for Mstepham*02
+                passwordHash: process.env.ADMIN_PASSWORD_HASH || '$2b$10$NzP7CQeDHWshNXrg5kpCtOSb4iXRlWRoKA1uyhypOCVHuSFuaIaey',
             };
         }
 
         const { email: adminEmail, passwordHash: adminPasswordHash } = adminData;
 
-        // Force use hardcoded hash if env var fails
-        const FINAL_HASH = '$2b$10$zMLr65LDx0yN3UFZaxaCbeiO5VL4H7qc/WtpbCjms9DJOxXK6oKJ2';
-        const FINAL_EMAIL = 'admin@admin.com';
+        if (!adminEmail || !adminPasswordHash) {
+            return NextResponse.json(
+                { error: 'Admin credentials not configured' },
+                { status: 500 }
+            );
+        }
 
         // Verify email
-        if (email !== FINAL_EMAIL && email !== adminEmail) {
-            console.log("Email mismatch against both Env and Hardcoded");
+        if (email !== adminEmail) {
             return NextResponse.json(
                 { error: 'Invalid credentials' },
                 { status: 401 }
             );
         }
 
-        // Verify password - Try against BOTH hashes to be safe
-        const isValidHardcoded = await comparePassword(password, FINAL_HASH);
-        const isValidEnv = await comparePassword(password, adminPasswordHash);
-
-        if (!isValidHardcoded && !isValidEnv) {
-            console.log("Password mismatch against both Hash sources");
+        // Verify password
+        const isValidPassword = await comparePassword(password, adminPasswordHash);
+        if (!isValidPassword) {
             return NextResponse.json(
                 { error: 'Invalid credentials' },
                 { status: 401 }
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         // Generate JWT token
         const token = await generateToken({
-            email: FINAL_EMAIL,
+            email: adminEmail,
             role: 'admin',
         });
 
