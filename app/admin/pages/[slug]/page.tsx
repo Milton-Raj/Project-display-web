@@ -347,10 +347,10 @@ export default function PageEditor() {
                                                             const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
                                                             if (fileInput) fileInput.value = "";
                                                         }}
-                                                        className="absolute top-1 right-1 p-1.5 rounded-full bg-destructive/90 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="absolute top-1 right-1 p-2 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-all z-10"
                                                         title="Remove image"
                                                     >
-                                                        <X className="w-3 h-3" />
+                                                        <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             )}
@@ -395,6 +395,7 @@ export default function PageEditor() {
                                                     }}
                                                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                                 />
+                                                {isUploading && <p className="text-xs text-blue-400 animate-pulse">Uploading image... please wait.</p>}
                                                 <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                                 <Input
                                                     value={formData.profileImage || ''}
