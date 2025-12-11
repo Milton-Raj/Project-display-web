@@ -1,5 +1,4 @@
-
-import { getProjects, getContacts } from "@/lib/json-db";
+import { getAllProjects, getAllContacts } from "@/lib/database";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { FolderGit2, Mail, Eye, MousePointerClick } from "lucide-react";
 import VisitorChart from "@/components/admin/dashboard/VisitorChart";
@@ -11,23 +10,28 @@ import { getVisitorData, getProjectStats, getRecentInquiries } from "@/lib/analy
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import DashboardActions from "@/components/admin/dashboard/DashboardActions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
-    const projects = await getProjects();
-    const contacts = await getContacts();
+    const projects = await getAllProjects();
+    const contacts = await getAllContacts();
 
     // Calculate stats
     const totalProjects = projects.length;
     const totalContacts = contacts.length;
-    const unreadContacts = contacts.filter((c: any) => c.status === 'unread').length;
+
+    // Calculate total views
+    const totalViews = projects.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0);
+
+    // Calculate engagement rate (Inquiries / Total Views)
+    const engagementRate = totalViews > 0
+        ? ((totalContacts / totalViews) * 100).toFixed(1) + "%"
+        : "0%";
 
     // Get Analytics Data
-    const visitorData = getVisitorData();
+    const visitorData = getVisitorData(); // Still returns empty/zero data as we don't have historical tracking yet
     const { topProjects, categoryData, techData } = getProjectStats(projects);
     const recentContacts = getRecentInquiries(contacts);
-
-    // Mock total views for now
-    // Real total views
-    const totalViews = projects.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0);
 
     return (
         <AdminLayout>
@@ -47,7 +51,7 @@ export default async function DashboardPage() {
                                 totalProjects,
                                 totalViews,
                                 totalContacts,
-                                engagementRate: "4.8%"
+                                engagementRate
                             },
                             topProjects,
                             recentContacts
@@ -55,31 +59,27 @@ export default async function DashboardPage() {
                     />
                 </div>
 
-                {/* Key Metrics */}
+                {/* Key Metrics - TRENDS REMOVED (User Request: No Dummy Data) */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     <StatsCard
                         title="Total Projects"
                         value={totalProjects}
                         icon={<FolderGit2 className="w-7 h-7 text-primary" />}
-                        trend={{ value: 2, isPositive: true }}
                     />
                     <StatsCard
                         title="Total Views"
                         value={totalViews.toLocaleString()}
                         icon={<Eye className="w-7 h-7 text-primary" />}
-                        trend={{ value: 12, isPositive: true }}
                     />
                     <StatsCard
                         title="Inquiries"
                         value={totalContacts}
                         icon={<Mail className="w-7 h-7 text-primary" />}
-                        trend={{ value: 1, isPositive: true }}
                     />
                     <StatsCard
                         title="Engagement Rate"
-                        value="4.8%"
+                        value={engagementRate}
                         icon={<MousePointerClick className="w-7 h-7 text-primary" />}
-                        trend={{ value: 0.5, isPositive: true }}
                     />
                 </div>
 
