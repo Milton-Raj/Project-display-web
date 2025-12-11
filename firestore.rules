@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Firestore Security Rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all documents (for public website)
+    match /{document=**} {
+      allow read: if true;
+    }
+    
+    // Allow write access to all documents (for admin panel)
+    // TODO: Restrict this to authenticated admin users in production
+    match /{document=**} {
+      allow write: if true;
+    }
+  }
+}

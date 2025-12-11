@@ -365,6 +365,11 @@ export default function PageEditor() {
                                                         const file = e.target.files?.[0];
                                                         if (!file) return;
 
+                                                        // Create timeout promise
+                                                        const timeoutPromise = new Promise((_, reject) => {
+                                                            setTimeout(() => reject(new Error("Upload timeout - please check your Firebase Storage rules")), 30000);
+                                                        });
+
                                                         try {
                                                             setIsUploading(true);
 
@@ -378,19 +383,31 @@ export default function PageEditor() {
                                                             }
 
                                                             const storageRef = ref(storage, `content/${Date.now()}-${file.name}`);
-                                                            const snapshot = await uploadBytes(storageRef, file);
+
+                                                            // Race between upload and timeout
+                                                            const uploadPromise = uploadBytes(storageRef, file);
+                                                            const snapshot = await Promise.race([uploadPromise, timeoutPromise]) as any;
                                                             const downloadURL = await getDownloadURL(snapshot.ref);
 
                                                             setFormData({ ...formData, profileImage: downloadURL });
                                                             toast({
                                                                 title: "Success",
-                                                                description: "Image uploaded successfully",
+                                                                description: "Image uploaded successfully. Click Save to update the page.",
                                                             });
                                                         } catch (error: any) {
                                                             console.error("Upload failed:", error);
+                                                            let errorMessage = error.message || "Please check your internet connection.";
+
+                                                            // Provide helpful error messages
+                                                            if (error.code === 'storage/unauthorized') {
+                                                                errorMessage = "Permission denied. Please deploy the storage.rules file to Firebase.";
+                                                            } else if (error.message?.includes("timeout")) {
+                                                                errorMessage = "Upload timed out. Check Firebase Storage rules and internet connection.";
+                                                            }
+
                                                             toast({
                                                                 title: "Error Uploading Image",
-                                                                description: error.message || "Please check your internet connection.",
+                                                                description: errorMessage,
                                                                 variant: "destructive",
                                                             });
                                                         } finally {
