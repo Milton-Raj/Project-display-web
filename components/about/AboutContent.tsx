@@ -137,10 +137,10 @@ export function AboutContent({ content }: AboutContentProps) {
                     </div>
 
                     {/* Floating Stats */}
-                    <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 rounded-2xl shadow-2xl border-2 border-white/20 backdrop-blur-xl">
+                    <div className="absolute -bottom-6 -right-6 bg-black/90 p-6 rounded-2xl shadow-2xl border-2 border-cyan-400/30 backdrop-blur-xl">
                         <div className="space-y-2">
-                            <div className="text-4xl font-bold gradient-text-primary drop-shadow-lg">{content.experienceYears || "5+"}</div>
-                            <div className="text-sm text-gray-200 font-semibold">Years Experience</div>
+                            <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">{content.experienceYears || "11+"}</div>
+                            <div className="text-sm text-white font-semibold tracking-wide">Years Experience</div>
                         </div>
                     </div>
                 </motion.div>
