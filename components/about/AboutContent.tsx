@@ -117,11 +117,10 @@ export function AboutContent({ content }: AboutContentProps) {
                 >
                     <div className="relative w-full aspect-square rounded-3xl overflow-hidden glass-strong shadow-premium-lg">
                         {content.profileImage ? (
-                            <Image
+                            <img
                                 src={content.profileImage}
                                 alt="Profile"
-                                fill
-                                className="object-cover"
+                                className="absolute inset-0 w-full h-full object-cover"
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20">
