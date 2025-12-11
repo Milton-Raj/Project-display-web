@@ -16,12 +16,12 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Chrixlin - Premium Project Showcase",
+  title: "Chrixlin",
   description: "Building scalable apps for web & mobile. Explore my portfolio of premium digital experiences.",
   keywords: ["web development", "mobile apps", "AI tools", "business solutions", "portfolio"],
   authors: [{ name: "Milton Raj" }],
   openGraph: {
-    title: "Chrixlin - Premium Project Showcase",
+    title: "Chrixlin",
     description: "Building scalable apps for web & mobile",
     url: process.env.NEXT_PUBLIC_SITE_URL,
     siteName: "Chrixlin",
