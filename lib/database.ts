@@ -200,3 +200,31 @@ export async function getStats() {
         unreadMessages: contacts.filter(c => c.status === 'unread').length,
     };
 }
+
+// ============= PAGE CONTENT =============
+
+export async function getPageContent(slug: string) {
+    try {
+        const docRef = doc(db, 'pages', slug);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching page content:", error);
+        return null;
+    }
+}
+
+export async function updatePageContent(slug: string, content: any) {
+    try {
+        const docRef = doc(db, 'pages', slug);
+        await setDoc(docRef, content, { merge: true });
+        return true;
+    } catch (error) {
+        console.error("Error updating page content:", error);
+        throw error;
+    }
+}

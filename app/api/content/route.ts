@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updatePageContent, getPageContent } from '@/lib/json-db';
+import { updatePageContent, getPageContent } from '@/lib/database';
 
 // Enable static rendering and caching for faster responses
 export const dynamic = 'force-static';

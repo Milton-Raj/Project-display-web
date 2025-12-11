@@ -118,11 +118,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                     </Link>
                                 )}
 
-                                <Link href="/contact">
-                                    <Button variant="ghost" size="lg">
-                                        Contact for Details
-                                    </Button>
-                                </Link>
+                                <div className="w-full pt-4">
+                                    <Link href="/contact" className="block w-full">
+                                        <Button variant="gradient" size="lg" className="w-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all h-14">
+                                            Contact for Details
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
 
                             <div className="pt-8 border-t border-white/10">

@@ -1,3 +1,4 @@
+import { getPageContent } from "@/lib/database";
 import { WhatIOfferContent } from "@/components/what-i-offer/WhatIOfferContent";
 
 export const metadata = {

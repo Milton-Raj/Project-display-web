@@ -1,4 +1,4 @@
-import { getPageContent } from "@/lib/json-db";
+import { getPageContent } from "@/lib/database";
 import { ContactContent } from "@/components/contact/ContactContent";
 
 export const dynamic = 'force-dynamic';

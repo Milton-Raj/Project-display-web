@@ -2,7 +2,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { getFeaturedProjects, getAllProjects } from "@/lib/database";
-import { getPageContent, getSettings } from "@/lib/json-db";
+import { getPageContent } from "@/lib/database";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AboutContent } from "@/components/about/AboutContent";
