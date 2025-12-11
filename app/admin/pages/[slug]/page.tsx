@@ -370,7 +370,11 @@ export default function PageEditor() {
 
                                                             // Ensure user is signed in anonymously to allow write access
                                                             if (!auth.currentUser) {
-                                                                await signInAnonymously(auth);
+                                                                try {
+                                                                    await signInAnonymously(auth);
+                                                                } catch (authError) {
+                                                                    console.warn("Anonymous auth failed, trying upload anyway (rules might be open):", authError);
+                                                                }
                                                             }
 
                                                             const storageRef = ref(storage, `content/${Date.now()}-${file.name}`);
