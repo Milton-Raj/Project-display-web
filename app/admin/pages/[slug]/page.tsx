@@ -12,8 +12,9 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { useParams } from "next/navigation";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { storage } from "@/lib/firebase";
+import { storage, auth } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { signInAnonymously } from "firebase/auth";
 
 export default function PageEditor() {
     const params = useParams();
@@ -366,6 +367,12 @@ export default function PageEditor() {
 
                                                         try {
                                                             setIsUploading(true);
+
+                                                            // Ensure user is signed in anonymously to allow write access
+                                                            if (!auth.currentUser) {
+                                                                await signInAnonymously(auth);
+                                                            }
+
                                                             const storageRef = ref(storage, `content/${Date.now()}-${file.name}`);
                                                             const snapshot = await uploadBytes(storageRef, file);
                                                             const downloadURL = await getDownloadURL(snapshot.ref);
@@ -375,11 +382,11 @@ export default function PageEditor() {
                                                                 title: "Success",
                                                                 description: "Image uploaded successfully",
                                                             });
-                                                        } catch (error) {
+                                                        } catch (error: any) {
                                                             console.error("Upload failed:", error);
                                                             toast({
-                                                                title: "Error",
-                                                                description: "Failed to upload image",
+                                                                title: "Error Uploading Image",
+                                                                description: error.message || "Please check your internet connection.",
                                                                 variant: "destructive",
                                                             });
                                                         } finally {
