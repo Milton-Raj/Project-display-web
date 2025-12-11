@@ -69,22 +69,31 @@ export function AboutContent({ content }: AboutContentProps) {
                     </div>
 
                     <h1 className="text-5xl md:text-6xl font-bold">
-                        {content.heroTitle || (
+                        {content.heroTitle ? (
+                            content.heroTitle.includes("Milton Raj") ? (
+                                <>
+                                    {content.heroTitle.split("Milton Raj")[0]}
+                                    <span className="gradient-text">Milton Raj</span>
+                                    {content.heroTitle.split("Milton Raj")[1]}
+                                </>
+                            ) : (
+                                content.heroTitle
+                            )
+                        ) : (
                             <>Hi, I'm <span className="gradient-text">Milton Raj</span></>
                         )}
                     </h1>
 
-                    <p className="text-xl text-muted-foreground leading-relaxed">
-                        {content.heroSubtitle1 || "Building scalable apps for web & mobile"}
-                    </p>
+                    {/* Subtitle with Rich Text Support */}
+                    <div className="text-xl text-muted-foreground leading-relaxed prose prose-invert max-w-none">
+                        {content.heroSubtitle1 ? (
+                            <div dangerouslySetInnerHTML={{ __html: content.heroSubtitle1 }} />
+                        ) : (
+                            "Building scalable apps for web & mobile"
+                        )}
+                    </div>
 
-                    <p className="text-lg text-muted-foreground leading-relaxed">
-                        {content.heroSubtitle2 || "I'm a passionate full-stack developer specializing in creating premium digital experiences. With expertise in modern web technologies, mobile app development, and AI integration, I transform innovative ideas into robust, scalable solutions."}
-                    </p>
-
-                    <p className="text-lg text-muted-foreground leading-relaxed">
-                        {content.heroSubtitle3 || "My approach combines technical excellence with user-centric design, ensuring every project not only meets but exceeds expectations. I believe in writing clean, maintainable code and building products that make a real impact."}
-                    </p>
+                    {/* Bio Paragraphs REMOVED as per request */}
 
                     <div className="flex flex-wrap gap-4 pt-4">
                         <Link href="/projects">
