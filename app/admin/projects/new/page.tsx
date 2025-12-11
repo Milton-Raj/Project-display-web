@@ -46,6 +46,7 @@ export default function NewProjectPage() {
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [isUploadingDoc, setIsUploadingDoc] = useState(false);
     const [isUploading, setUploading] = useState(false);
+    const [mobileDemoType, setMobileDemoType] = useState<'ios' | 'android' | 'apk' | 'testflight' | 'none'>('none');
 
     // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
@@ -520,21 +521,48 @@ export default function NewProjectPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Live Website URL</label>
-                                <Input
-                                    value={formData.demoUrl || ''}
-                                    onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
-                                    placeholder="https://myproject.com"
-                                />
+                                <label className="text-sm font-medium">Demo Type</label>
+                                <select
+                                    value={formData.demoType === 'video' ? 'video' : formData.demoType === 'web' ? 'web' : 'none'}
+                                    onChange={(e) => {
+                                        const type = e.target.value;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            demoType: type as any,
+                                            // Clear values when switching
+                                            demoUrl: type === 'web' ? prev.demoUrl : '',
+                                            videoUrl: type === 'video' ? prev.videoUrl : ''
+                                        }));
+                                    }}
+                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                >
+                                    <option value="web">Live Website URL</option>
+                                    <option value="video">Video Demo</option>
+                                    <option value="none">No Demo</option>
+                                </select>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Video Demo URL</label>
-                                <Input
-                                    value={formData.videoUrl || ''}
-                                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                                    placeholder="https://youtube.com/..."
-                                />
-                            </div>
+
+                            {formData.demoType === 'web' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Live Website URL</label>
+                                    <Input
+                                        value={formData.demoUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                        placeholder="https://myproject.com"
+                                    />
+                                </div>
+                            )}
+
+                            {formData.demoType === 'video' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Video Demo URL</label>
+                                    <Input
+                                        value={formData.videoUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                                        placeholder="https://youtube.com/..."
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -544,15 +572,45 @@ export default function NewProjectPage() {
                             <CardTitle>Mobile Project Details</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Platform</label>
+                                <select
+                                    value={mobileDemoType}
+                                    onChange={(e) => {
+                                        const type = e.target.value as any;
+                                        setMobileDemoType(type);
+                                        // Clear all mobile URLs when switching types to ensure exclusivity
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            appStoreUrl: '',
+                                            playStoreUrl: '',
+                                            apkUrl: '',
+                                            testFlightUrl: ''
+                                        }));
+                                    }}
+                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                >
+                                    <option value="none">No Mobile App</option>
+                                    <option value="ios">Apple App Store (iOS)</option>
+                                    <option value="android">Google Play Store (Android)</option>
+                                    <option value="apk">Android APK Download</option>
+                                    <option value="testflight">iOS TestFlight</option>
+                                </select>
+                            </div>
+
+                            {/* Dynamic Input based on Selection */}
+                            {mobileDemoType === 'ios' && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Apple App Store URL</label>
+                                    <label className="text-sm font-medium">App Store URL</label>
                                     <Input
                                         value={formData.appStoreUrl || ''}
                                         onChange={(e) => setFormData({ ...formData, appStoreUrl: e.target.value })}
                                         placeholder="https://apps.apple.com/..."
                                     />
                                 </div>
+                            )}
+
+                            {mobileDemoType === 'android' && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Google Play Store URL</label>
                                     <Input
@@ -561,6 +619,9 @@ export default function NewProjectPage() {
                                         placeholder="https://play.google.com/..."
                                     />
                                 </div>
+                            )}
+
+                            {mobileDemoType === 'apk' && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">APK Download URL</label>
                                     <Input
@@ -569,15 +630,18 @@ export default function NewProjectPage() {
                                         placeholder="https://.../app.apk"
                                     />
                                 </div>
+                            )}
+
+                            {mobileDemoType === 'testflight' && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">TestFlight URL</label>
+                                    <label className="text-sm font-medium">TestFlight Link</label>
                                     <Input
                                         value={formData.testFlightUrl || ''}
                                         onChange={(e) => setFormData({ ...formData, testFlightUrl: e.target.value })}
                                         placeholder="https://testflight.apple.com/..."
                                     />
                                 </div>
-                            </div>
+                            )}
                         </CardContent>
                     </Card>
 

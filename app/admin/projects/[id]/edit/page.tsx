@@ -28,7 +28,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
         thumbnail: "",
         screenshots: [] as string[],
         demoUrl: "",
+        videoUrl: "",
         demoType: "web" as any,
+        appStoreUrl: "",
+        playStoreUrl: "",
+        apkUrl: "",
+        testFlightUrl: "",
         status: "live" as any,
         featured: false,
         documents: [] as { name: string; url: string; previewUrl?: string }[],
@@ -44,6 +49,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
     // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
+    const [mobileDemoType, setMobileDemoType] = useState<'ios' | 'android' | 'apk' | 'testflight' | 'none'>('none');
 
     useEffect(() => {
         async function resolveParams() {
@@ -71,6 +77,13 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                         documents: data.project.documents || [],
                         screenshots: data.project.screenshots || [],
                     });
+
+                    // Set derived existing state
+                    if (data.project.appStoreUrl) setMobileDemoType('ios');
+                    else if (data.project.playStoreUrl) setMobileDemoType('android');
+                    else if (data.project.apkUrl) setMobileDemoType('apk');
+                    else if (data.project.testFlightUrl) setMobileDemoType('testflight');
+                    else setMobileDemoType('none');
                 } else {
                     console.error("Project not found in response:", data);
                     alert("Project not found");
@@ -437,12 +450,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                         </CardContent>
                     </Card>
 
-                    {/* Media */}
+                    {/* Web Project Details */}
                     <Card className="glass">
                         <CardHeader>
-                            <CardTitle>Media & Demo</CardTitle>
+                            <CardTitle>Web Project Details</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <div className="space-y-4">
                                 <label className="text-sm font-medium">Thumbnail Image</label>
 
@@ -506,28 +519,126 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Demo URL</label>
-                                <Input
-                                    value={formData.demoUrl}
-                                    onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
-                                    placeholder="https://demo.example.com"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Demo Type</label>
                                 <select
-                                    value={formData.demoType}
-                                    onChange={(e) => setFormData({ ...formData, demoType: e.target.value as any })}
+                                    value={formData.demoType === 'video' ? 'video' : formData.demoType === 'web' ? 'web' : 'none'}
+                                    onChange={(e) => {
+                                        const type = e.target.value;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            demoType: type as any,
+                                            // Clear values when switching
+                                            demoUrl: type === 'web' ? prev.demoUrl : '',
+                                            videoUrl: type === 'video' ? prev.videoUrl : ''
+                                        }));
+                                    }}
                                     className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
                                 >
-                                    {DEMO_TYPES.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
+                                    <option value="web">Live Website URL</option>
+                                    <option value="video">Video Demo</option>
+                                    <option value="none">No Demo</option>
                                 </select>
                             </div>
+
+                            {formData.demoType === 'web' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Live Website URL</label>
+                                    <Input
+                                        value={formData.demoUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                        placeholder="https://myproject.com"
+                                    />
+                                </div>
+                            )}
+
+                            {formData.demoType === 'video' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Video Demo URL</label>
+                                    <Input
+                                        value={formData.videoUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                                        placeholder="https://youtube.com/..."
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Mobile Project Details */}
+                    <Card className="glass">
+                        <CardHeader>
+                            <CardTitle>Mobile Project Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Platform</label>
+                                <select
+                                    value={mobileDemoType}
+                                    onChange={(e) => {
+                                        const type = e.target.value as any;
+                                        setMobileDemoType(type);
+                                        // Clear all mobile URLs when switching types
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            appStoreUrl: '',
+                                            playStoreUrl: '',
+                                            apkUrl: '',
+                                            testFlightUrl: ''
+                                        }));
+                                    }}
+                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                >
+                                    <option value="none">No Mobile App</option>
+                                    <option value="ios">Apple App Store (iOS)</option>
+                                    <option value="android">Google Play Store (Android)</option>
+                                    <option value="apk">Android APK Download</option>
+                                    <option value="testflight">iOS TestFlight</option>
+                                </select>
+                            </div>
+
+                            {mobileDemoType === 'ios' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">App Store URL</label>
+                                    <Input
+                                        value={formData.appStoreUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, appStoreUrl: e.target.value })}
+                                        placeholder="https://apps.apple.com/..."
+                                    />
+                                </div>
+                            )}
+
+                            {mobileDemoType === 'android' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Google Play Store URL</label>
+                                    <Input
+                                        value={formData.playStoreUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, playStoreUrl: e.target.value })}
+                                        placeholder="https://play.google.com/..."
+                                    />
+                                </div>
+                            )}
+
+                            {mobileDemoType === 'apk' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">APK Download URL</label>
+                                    <Input
+                                        value={formData.apkUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, apkUrl: e.target.value })}
+                                        placeholder="https://.../app.apk"
+                                    />
+                                </div>
+                            )}
+
+                            {mobileDemoType === 'testflight' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">TestFlight Link</label>
+                                    <Input
+                                        value={formData.testFlightUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, testFlightUrl: e.target.value })}
+                                        placeholder="https://testflight.apple.com/..."
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
