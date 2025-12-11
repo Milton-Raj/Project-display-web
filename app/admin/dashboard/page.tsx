@@ -26,7 +26,8 @@ export default async function DashboardPage() {
     const recentContacts = getRecentInquiries(contacts);
 
     // Mock total views for now
-    const totalViews = projects.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0) + 1250; // Base + mock
+    // Real total views
+    const totalViews = projects.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0);
 
     return (
         <AdminLayout>
