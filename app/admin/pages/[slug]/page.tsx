@@ -11,6 +11,9 @@ import { ArrowLeft, Save, Loader2, X, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { useParams } from "next/navigation";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function PageEditor() {
     const params = useParams();
@@ -19,6 +22,7 @@ export default function PageEditor() {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [formData, setFormData] = useState<any>({});
 
     useEffect(() => {
@@ -313,28 +317,15 @@ export default function PageEditor() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">Subtitle 1 (Bold)</label>
-                                            <Input
+                                            <RichTextEditor
                                                 value={formData.heroSubtitle1 || ''}
-                                                onChange={(e) => setFormData({ ...formData, heroSubtitle1: e.target.value })}
+                                                onChange={(val) => setFormData({ ...formData, heroSubtitle1: val })}
                                                 placeholder="e.g., Building scalable apps..."
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Bio Paragraph 1</label>
-                                            <Textarea
-                                                value={formData.heroSubtitle2 || ''}
-                                                onChange={(e) => setFormData({ ...formData, heroSubtitle2: e.target.value })}
-                                                className="min-h-[100px]"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Bio Paragraph 2</label>
-                                            <Textarea
-                                                value={formData.heroSubtitle3 || ''}
-                                                onChange={(e) => setFormData({ ...formData, heroSubtitle3: e.target.value })}
-                                                className="min-h-[100px]"
-                                            />
-                                        </div>
+
+                                        {/* Bio Paragraphs REMOVED as per request */}
+
                                         <div className="space-y-4">
                                             <label className="text-sm font-medium">Profile Image</label>
 
@@ -368,7 +359,33 @@ export default function PageEditor() {
                                                 <Input
                                                     type="file"
                                                     accept="image/*"
-                                                    onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
+                                                    disabled={isUploading}
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+
+                                                        try {
+                                                            setIsUploading(true);
+                                                            const storageRef = ref(storage, `content/${Date.now()}-${file.name}`);
+                                                            const snapshot = await uploadBytes(storageRef, file);
+                                                            const downloadURL = await getDownloadURL(snapshot.ref);
+
+                                                            setFormData({ ...formData, profileImage: downloadURL });
+                                                            toast({
+                                                                title: "Success",
+                                                                description: "Image uploaded successfully",
+                                                            });
+                                                        } catch (error) {
+                                                            console.error("Upload failed:", error);
+                                                            toast({
+                                                                title: "Error",
+                                                                description: "Failed to upload image",
+                                                                variant: "destructive",
+                                                            });
+                                                        } finally {
+                                                            setIsUploading(false);
+                                                        }
+                                                    }}
                                                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                                 />
                                                 <div className="text-center text-xs text-muted-foreground">- OR -</div>

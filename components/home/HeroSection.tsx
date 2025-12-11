@@ -54,7 +54,17 @@ export function HeroSection({ title, subtitle, stats }: HeroSectionProps) {
                     className="space-y-4"
                 >
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold">
-                        {title || (
+                        {title ? (
+                            title.includes("Milton Raj") ? (
+                                <>
+                                    {title.split("Milton Raj")[0]}
+                                    <span className="gradient-text animate-gradient">Milton Raj</span>
+                                    {title.split("Milton Raj")[1]}
+                                </>
+                            ) : (
+                                title
+                            )
+                        ) : (
                             <>
                                 Building{" "}
                                 <span className="gradient-text animate-gradient">
@@ -70,15 +80,19 @@ export function HeroSection({ title, subtitle, stats }: HeroSectionProps) {
                     )}
                 </motion.div>
 
-                {/* Description */}
-                <motion.p
+                {/* Description - Supports Rich Text (HTML) */}
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
                 >
-                    {subtitle || "Transforming innovative ideas into premium digital solutions. Specialized in web applications, mobile apps, and AI-powered tools."}
-                </motion.p>
+                    {subtitle ? (
+                        <div dangerouslySetInnerHTML={{ __html: subtitle }} />
+                    ) : (
+                        <p>Transforming innovative ideas into premium digital solutions. Specialized in web applications, mobile apps, and AI-powered tools.</p>
+                    )}
+                </motion.div>
 
                 {/* CTA Buttons */}
                 <motion.div
