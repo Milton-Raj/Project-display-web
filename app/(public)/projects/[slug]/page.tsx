@@ -63,69 +63,38 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                             </div>
 
                             {/* Demo Buttons */}
-                            <div className="flex flex-wrap gap-4 pt-4">
-                                {project.demoUrl && (
-                                    <Link href={project.demoUrl} target="_blank">
-                                        <Button variant="gradient" size="lg" className="glow-primary">
-                                            View Live Demo
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
+                            {/* Demo Buttons */}
+                            {(() => {
+                                const actionButtons = [
+                                    project.demoUrl ? { label: "View Live Demo", url: project.demoUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "gradient", className: "glow-primary" } : null,
+                                    project.videoUrl ? { label: "Watch Video", url: project.videoUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "outline", className: "border-primary/50 text-foreground hover:bg-primary/10" } : null,
+                                    project.appStoreUrl ? { label: "Download on App Store", url: project.appStoreUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "outline" } : null,
+                                    project.playStoreUrl ? { label: "Get it on Play Store", url: project.playStoreUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "outline" } : null,
+                                    project.apkUrl ? { label: "Download APK", url: project.apkUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "outline" } : null,
+                                    project.testFlightUrl ? { label: "Join TestFlight", url: project.testFlightUrl, icon: <ExternalLink className="w-4 h-4 ml-2" />, variant: "outline" } : null,
+                                ].filter(Boolean);
 
-                                {project.videoUrl && (
-                                    <Link href={project.videoUrl} target="_blank">
-                                        <Button variant="outline" size="lg" className="border-primary/50 text-foreground hover:bg-primary/10">
-                                            Watch Video
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
+                                return (
+                                    <div className="grid grid-cols-1 sm:grid-cols-[auto_auto] gap-4 pt-4 w-fit">
+                                        {actionButtons.map((btn: any, idx) => (
+                                            <Link key={idx} href={btn.url} target="_blank" className="w-full">
+                                                <Button variant={btn.variant} size="lg" className={`w-full ${btn.className || ""}`}>
+                                                    {btn.label}
+                                                    {btn.icon}
+                                                </Button>
+                                            </Link>
+                                        ))}
 
-                                {project.appStoreUrl && (
-                                    <Link href={project.appStoreUrl} target="_blank">
-                                        <Button variant="outline" size="lg">
-                                            Download on App Store
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                {project.playStoreUrl && (
-                                    <Link href={project.playStoreUrl} target="_blank">
-                                        <Button variant="outline" size="lg">
-                                            Get it on Play Store
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                {project.apkUrl && (
-                                    <Link href={project.apkUrl} target="_blank">
-                                        <Button variant="outline" size="lg">
-                                            Download APK
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                {project.testFlightUrl && (
-                                    <Link href={project.testFlightUrl} target="_blank">
-                                        <Button variant="outline" size="lg">
-                                            Join TestFlight
-                                            <ExternalLink className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                <div className="w-full pt-4">
-                                    <Link href="/contact">
-                                        <Button variant="gradient" size="lg" className="text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
-                                            Contact for Details
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </div>
+                                        <div className="col-span-1 sm:col-span-2 pt-2 w-full">
+                                            <Link href="/contact" className="block w-full">
+                                                <Button variant="gradient" size="lg" className="w-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all h-14">
+                                                    Contact for Details
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             <div className="pt-8 border-t border-white/10">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center">
