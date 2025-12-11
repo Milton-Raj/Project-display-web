@@ -64,45 +64,54 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
                             {/* Demo Buttons */}
                             <div className="flex flex-wrap gap-4 pt-4">
-                                {(project.demoType === 'web' || project.demoType === 'video') && project.demoUrl && (
+                                {project.demoUrl && (
                                     <Link href={project.demoUrl} target="_blank">
                                         <Button variant="gradient" size="lg" className="glow-primary">
-                                            {project.demoType === 'video' ? 'Watch Demo Video' : 'View Live Demo'}
+                                            View Live Demo
                                             <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
                                     </Link>
                                 )}
 
-                                {project.demoType === 'mobile-ios' && project.appStoreUrl && (
+                                {project.videoUrl && (
+                                    <Link href={project.videoUrl} target="_blank">
+                                        <Button variant="outline" size="lg" className="border-primary/50 text-foreground hover:bg-primary/10">
+                                            Watch Video
+                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                {project.appStoreUrl && (
                                     <Link href={project.appStoreUrl} target="_blank">
-                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                        <Button variant="outline" size="lg">
                                             Download on App Store
                                             <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
                                     </Link>
                                 )}
 
-                                {project.demoType === 'mobile-android' && project.playStoreUrl && (
+                                {project.playStoreUrl && (
                                     <Link href={project.playStoreUrl} target="_blank">
-                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                        <Button variant="outline" size="lg">
                                             Get it on Play Store
                                             <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
                                     </Link>
                                 )}
 
-                                {project.demoType === 'mobile-apk' && project.demoUrl && (
-                                    <Link href={project.demoUrl} target="_blank">
-                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                {project.apkUrl && (
+                                    <Link href={project.apkUrl} target="_blank">
+                                        <Button variant="outline" size="lg">
                                             Download APK
                                             <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
                                     </Link>
                                 )}
 
-                                {project.demoType === 'mobile-testflight' && project.demoUrl && (
-                                    <Link href={project.demoUrl} target="_blank">
-                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                {project.testFlightUrl && (
+                                    <Link href={project.testFlightUrl} target="_blank">
+                                        <Button variant="outline" size="lg">
                                             Join TestFlight
                                             <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
@@ -110,7 +119,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                 )}
 
                                 <Link href="/contact">
-                                    <Button variant="outline" size="lg">
+                                    <Button variant="ghost" size="lg">
                                         Contact for Details
                                     </Button>
                                 </Link>

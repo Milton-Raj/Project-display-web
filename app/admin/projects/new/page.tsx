@@ -27,8 +27,11 @@ export default function NewProjectPage() {
         thumbnail: "",
         screenshots: [] as string[],
         demoUrl: "",
+        videoUrl: "",
         appStoreUrl: "",
         playStoreUrl: "",
+        apkUrl: "",
+        testFlightUrl: "",
         demoType: "web" as any,
         status: "live" as any,
         featured: false,
@@ -42,16 +45,81 @@ export default function NewProjectPage() {
     const [docFile, setDocFile] = useState<File | null>(null);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+    const [isUploading, setUploading] = useState(false);
 
     // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
 
-    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setThumbnailFile(file);
-            // Show immediate preview
-            setFormData({ ...formData, thumbnail: URL.createObjectURL(file) });
+    const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            // Upload to Firebase Storage
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const { storage } = await import('@/lib/firebase');
+
+            const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+
+            setFormData({ ...formData, thumbnail: url });
+        } catch (error) {
+            console.error('Error uploading thumbnail:', error);
+            alert('Failed to upload image. Please try again.');
+        }
+    };
+
+    const handleScreenshotsChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        setUploading(true);
+        try {
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const { storage } = await import('@/lib/firebase');
+
+            const uploadPromises = files.map(async (file) => {
+                const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                return getDownloadURL(snapshot.ref);
+            });
+
+            const urls = await Promise.all(uploadPromises);
+            setFormData(prev => ({
+                ...prev,
+                screenshots: [...prev.screenshots, ...urls]
+            }));
+        } catch (error) {
+            console.error('Error uploading screenshots:', error);
+            alert('Failed to upload screenshots.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const { storage } = await import('@/lib/firebase');
+
+            const storageRef = ref(storage, `documents/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+
+            setFormData(prev => ({
+                ...prev,
+                documents: [...(prev.documents || []), { name: file.name, url }]
+            }));
+        } catch (error) {
+            console.error('Error uploading document:', error);
+            alert('Failed to upload document.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -386,12 +454,11 @@ export default function NewProjectPage() {
                     {/* Media */}
                     <Card className="glass">
                         <CardHeader>
-                            <CardTitle>Media & Demo</CardTitle>
+                            <CardTitle>Media</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Thumbnail Image</label>
-
                                 {/* Image Preview */}
                                 {formData.thumbnail && (
                                     <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white/10 shadow-lg group">
@@ -443,80 +510,74 @@ export default function NewProjectPage() {
                                     </Button>
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
 
+                    {/* Web Project Details */}
+                    <Card className="glass">
+                        <CardHeader>
+                            <CardTitle>Web Project Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Demo Type</label>
-                                <select
-                                    value={formData.demoType}
-                                    onChange={(e) => setFormData({ ...formData, demoType: e.target.value as any })}
-                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
-                                >
-                                    {DEMO_TYPES.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                <label className="text-sm font-medium">Live Website URL</label>
+                                <Input
+                                    value={formData.demoUrl || ''}
+                                    onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                    placeholder="https://myproject.com"
+                                />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Video Demo URL</label>
+                                <Input
+                                    value={formData.videoUrl || ''}
+                                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                                    placeholder="https://youtube.com/..."
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            {/* Conditional Fields based on Demo Type */}
-                            {/* Conditional Fields based on Demo Type */}
-                            {formData.demoType === 'mobile-ios' && (
+                    {/* Mobile Project Details */}
+                    <Card className="glass">
+                        <CardHeader>
+                            <CardTitle>Mobile Project Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">App Store URL (iOS)</label>
+                                    <label className="text-sm font-medium">Apple App Store URL</label>
                                     <Input
                                         value={formData.appStoreUrl || ''}
                                         onChange={(e) => setFormData({ ...formData, appStoreUrl: e.target.value })}
                                         placeholder="https://apps.apple.com/..."
                                     />
                                 </div>
-                            )}
-
-                            {formData.demoType === 'mobile-android' && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Play Store URL (Android)</label>
+                                    <label className="text-sm font-medium">Google Play Store URL</label>
                                     <Input
                                         value={formData.playStoreUrl || ''}
                                         onChange={(e) => setFormData({ ...formData, playStoreUrl: e.target.value })}
                                         placeholder="https://play.google.com/..."
                                     />
                                 </div>
-                            )}
-
-                            {formData.demoType === 'mobile-apk' && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">APK Download URL</label>
                                     <Input
-                                        value={formData.demoUrl || ''}
-                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                        value={formData.apkUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, apkUrl: e.target.value })}
                                         placeholder="https://.../app.apk"
                                     />
                                 </div>
-                            )}
-
-                            {formData.demoType === 'mobile-testflight' && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">TestFlight Link</label>
+                                    <label className="text-sm font-medium">TestFlight URL</label>
                                     <Input
-                                        value={formData.demoUrl || ''}
-                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
-                                        placeholder="https://testflight.apple.com/join/..."
+                                        value={formData.testFlightUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, testFlightUrl: e.target.value })}
+                                        placeholder="https://testflight.apple.com/..."
                                     />
                                 </div>
-                            )}
-
-                            {(formData.demoType === 'web' || formData.demoType === 'video') && (
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">
-                                        {formData.demoType === 'video' ? 'Video URL' : 'Website URL'}
-                                    </label>
-                                    <Input
-                                        value={formData.demoUrl || ''}
-                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
-                                        placeholder={formData.demoType === 'video' ? "https://youtube.com/..." : "https://myproject.com"}
-                                    />
-                                </div>
-                            )}
+                            </div>
                         </CardContent>
                     </Card>
 

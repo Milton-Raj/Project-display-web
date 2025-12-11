@@ -9,9 +9,12 @@ export interface Project {
     features: string[];
     thumbnail: string;
     screenshots: string[];
-    demoUrl?: string; // For web demos
-    appStoreUrl?: string; // For iOS App Store
-    playStoreUrl?: string; // For Google Play Store
+    demoUrl?: string; // Live Web Demo
+    videoUrl?: string; // Video Demo
+    appStoreUrl?: string; // iOS App Store
+    playStoreUrl?: string; // Google Play Store
+    apkUrl?: string; // Android APK Download
+    testFlightUrl?: string; // iOS TestFlight
     demoType: 'web' | 'mobile-ios' | 'mobile-android' | 'mobile-apk' | 'mobile-testflight' | 'video' | 'none';
     status: 'live' | 'coming-soon' | 'archived';
     featured: boolean;
@@ -39,9 +42,12 @@ export interface ProjectFormData {
     category: ProjectCategory | ProjectCategory[];
     techStack: string[];
     features: string[];
-    demoUrl?: string;
-    appStoreUrl?: string;
-    playStoreUrl?: string;
+    demoUrl?: string; // Live Web Demo
+    videoUrl?: string; // Video Demo
+    appStoreUrl?: string; // iOS App Store
+    playStoreUrl?: string; // Google Play Store
+    apkUrl?: string; // Android APK Download
+    testFlightUrl?: string; // iOS TestFlight
     demoType: Project['demoType'];
     status: Project['status'];
     featured: boolean;
