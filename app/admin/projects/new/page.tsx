@@ -27,6 +27,8 @@ export default function NewProjectPage() {
         thumbnail: "",
         screenshots: [] as string[],
         demoUrl: "",
+        appStoreUrl: "",
+        playStoreUrl: "",
         demoType: "web" as any,
         status: "live" as any,
         featured: false,
@@ -443,15 +445,6 @@ export default function NewProjectPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Demo URL</label>
-                                <Input
-                                    value={formData.demoUrl}
-                                    onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
-                                    placeholder="https://demo.example.com"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Demo Type</label>
                                 <select
                                     value={formData.demoType}
@@ -465,6 +458,38 @@ export default function NewProjectPage() {
                                     ))}
                                 </select>
                             </div>
+
+                            {/* Conditional Fields based on Demo Type */}
+                            {formData.demoType === 'mobile' ? (
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">App Store URL (iOS)</label>
+                                        <Input
+                                            value={formData.appStoreUrl || ''}
+                                            onChange={(e) => setFormData({ ...formData, appStoreUrl: e.target.value })}
+                                            placeholder="https://apps.apple.com/..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Play Store URL (Android)</label>
+                                        <Input
+                                            value={formData.playStoreUrl || ''}
+                                            onChange={(e) => setFormData({ ...formData, playStoreUrl: e.target.value })}
+                                            placeholder="https://play.google.com/..."
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Demo URL</label>
+                                    <Input
+                                        value={formData.demoUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                        placeholder={formData.demoType === 'video' ? "https://youtube.com/..." : "https://demo.example.com"}
+                                        disabled={formData.demoType === 'none'}
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
