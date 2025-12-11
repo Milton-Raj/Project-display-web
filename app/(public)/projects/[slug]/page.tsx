@@ -119,8 +119,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                 )}
 
                                 <div className="w-full pt-4">
-                                    <Link href="/contact" className="block w-full">
-                                        <Button variant="gradient" size="lg" className="w-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all h-14">
+                                    <Link href="/contact">
+                                        <Button variant="gradient" size="lg" className="text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
                                             Contact for Details
                                         </Button>
                                     </Link>
