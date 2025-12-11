@@ -52,7 +52,7 @@ export default function AdminProjectsPage() {
 
         try {
             console.log("Sending DELETE request...");
-            const response = await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
             console.log("Response received:", response.status);
 
             if (!response.ok) {

@@ -12,9 +12,10 @@ export interface Project {
     demoUrl?: string; // For web demos
     appStoreUrl?: string; // For iOS App Store
     playStoreUrl?: string; // For Google Play Store
-    demoType: 'web' | 'mobile' | 'video' | 'apk' | 'testflight' | 'none';
+    demoType: 'web' | 'mobile-ios' | 'mobile-android' | 'mobile-apk' | 'mobile-testflight' | 'video' | 'none';
     status: 'live' | 'coming-soon' | 'archived';
     featured: boolean;
+    views?: number; // Total view count for the project
     documents?: {
         name: string;
         url: string;
@@ -56,9 +57,10 @@ export const PROJECT_CATEGORIES: { value: ProjectCategory; label: string }[] = [
 
 export const DEMO_TYPES: { value: Project['demoType']; label: string }[] = [
     { value: 'web', label: 'Live Web Demo' },
-    { value: 'mobile', label: 'Mobile App Store (iOS/Android)' },
-    { value: 'video', label: 'Video Demo' },
-    { value: 'apk', label: 'Android APK' },
-    { value: 'testflight', label: 'iOS TestFlight' },
+    { value: 'mobile-ios', label: 'App Store (iOS)' },
+    { value: 'mobile-android', label: 'Play Store (Android)' },
+    { value: 'mobile-apk', label: 'Android APK Download' },
+    { value: 'mobile-testflight', label: 'iOS TestFlight' },
+    { value: 'video', label: 'Video Demo Only' },
     { value: 'none', label: 'No Demo' },
 ];

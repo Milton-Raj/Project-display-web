@@ -19,44 +19,13 @@ export default function VisitorChart({ data: initialData }: { data: any[] }) {
     const [timeRange, setTimeRange] = useState('7d');
     const [chartData, setChartData] = useState(initialData);
 
-    // Simulate data fetching based on range
+    // Filter data based on time range (mock implementation for time filtering since we don't have historical db yet)
+    // In a real app, you would fetch new data here or filter the `initialData` if it contained full history
     useEffect(() => {
-        const generateData = () => {
-            let dataPoints = 7;
-            let labels: string[] = [];
-
-            switch (timeRange) {
-                case '7d':
-                    dataPoints = 7;
-                    labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                    break;
-                case '15d':
-                    dataPoints = 15;
-                    labels = Array.from({ length: 15 }, (_, i) => `${i + 1}`);
-                    break;
-                case '30d':
-                    dataPoints = 10; // Condensed
-                    labels = ['1', '4', '7', '10', '13', '16', '19', '22', '25', '28'];
-                    break;
-                case '6m':
-                    dataPoints = 6;
-                    labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                    break;
-                case '1y':
-                    dataPoints = 12;
-                    labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    break;
-            }
-
-            return labels.map(label => ({
-                name: label,
-                visits: Math.floor(Math.random() * 100) + 20,
-                views: Math.floor(Math.random() * 200) + 50,
-            }));
-        };
-
-        setChartData(generateData());
-    }, [timeRange]);
+        // For now, we just pass initialData. 
+        // Later: Implement server-side filtering logic
+        setChartData(initialData);
+    }, [timeRange, initialData]);
 
     return (
         <motion.div

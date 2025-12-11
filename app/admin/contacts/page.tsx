@@ -102,7 +102,7 @@ export default function AdminContactsPage() {
 
         try {
             console.log("Sending DELETE request...");
-            const response = await fetch(`/api/contacts?id=${id}`, {
+            const response = await fetch(`/api/contacts/${id}`, {
                 method: 'DELETE'
             });
             console.log("Response received:", response.status);

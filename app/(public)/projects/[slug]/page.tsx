@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ExternalLink, Github, Calendar, Layers, CheckCircle, FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { ViewCounter } from "@/components/projects/ViewCounter";
 
 interface ProjectPageProps {
     params: Promise<{
@@ -23,6 +24,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
     return (
         <div className="min-h-screen pb-20">
+            <ViewCounter projectId={project.id} slug={project.slug} views={project.views || 0} />
+
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
@@ -59,34 +62,53 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap gap-4">
-                                {project.demoUrl && (
+                            {/* Demo Buttons */}
+                            <div className="flex flex-wrap gap-4 pt-4">
+                                {(project.demoType === 'web' || project.demoType === 'video') && project.demoUrl && (
                                     <Link href={project.demoUrl} target="_blank">
                                         <Button variant="gradient" size="lg" className="glow-primary">
-                                            {project.demoType === 'video' ? (
-                                                <>
-                                                    Watch Demo Video
-                                                    <ExternalLink className="w-4 h-4 ml-2" />
-                                                </>
-                                            ) : project.demoType === 'apk' ? (
-                                                <>
-                                                    Download APK
-                                                    <ExternalLink className="w-4 h-4 ml-2" />
-                                                </>
-                                            ) : project.demoType === 'testflight' ? (
-                                                <>
-                                                    Join TestFlight
-                                                    <ExternalLink className="w-4 h-4 ml-2" />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    View Live Demo
-                                                    <ExternalLink className="w-4 h-4 ml-2" />
-                                                </>
-                                            )}
+                                            {project.demoType === 'video' ? 'Watch Demo Video' : 'View Live Demo'}
+                                            <ExternalLink className="w-4 h-4 ml-2" />
                                         </Button>
                                     </Link>
                                 )}
+
+                                {project.demoType === 'mobile-ios' && project.appStoreUrl && (
+                                    <Link href={project.appStoreUrl} target="_blank">
+                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                            Download on App Store
+                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                {project.demoType === 'mobile-android' && project.playStoreUrl && (
+                                    <Link href={project.playStoreUrl} target="_blank">
+                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                            Get it on Play Store
+                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                {project.demoType === 'mobile-apk' && project.demoUrl && (
+                                    <Link href={project.demoUrl} target="_blank">
+                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                            Download APK
+                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                {project.demoType === 'mobile-testflight' && project.demoUrl && (
+                                    <Link href={project.demoUrl} target="_blank">
+                                        <Button variant="gradient" size="lg" className="glow-primary">
+                                            Join TestFlight
+                                            <ExternalLink className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                )}
+
                                 <Link href="/contact">
                                     <Button variant="outline" size="lg">
                                         Contact for Details

@@ -12,19 +12,13 @@ export interface Contact {
 
 // Mock daily visits data since we don't have a real tracker yet
 export const getVisitorData = () => {
-    // Generate deterministic "random" data based on date to look consistent but alive
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const today = new Date().getDay(); // 0 is Sunday
 
-    // Shift days so today is last
-    const rotatedDays = [...days.slice(today), ...days.slice(0, today)]; // Actually we want typical Mon-Sun or Last 7 Days
-    // Let's just stick to Mon-Sun for simplicity or Last 7 Days
-
-    // Simple mock that looks consistent
+    // Return empty/flat data until we implement a real visit tracker database
     return days.map(day => ({
         name: day,
-        visits: Math.floor(Math.random() * 20) + 5, // Lower realistic numbers
-        views: Math.floor(Math.random() * 40) + 10,
+        visits: 0,
+        views: 0,
     }));
 };
 
