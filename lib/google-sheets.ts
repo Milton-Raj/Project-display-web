@@ -229,6 +229,9 @@ export async function getAllProjects() {
                     testFlightUrl: row[19] || '',
                     demoType: row[20] || 'none',
                     status: row[21] || 'live',
+
+                    // Additional fields
+                    views: 0,
                 };
             } catch (parseError) {
                 console.error(`Error parsing project at row ${index + 2}:`, parseError);
@@ -260,6 +263,7 @@ export async function getAllProjects() {
                     testFlightUrl: '',
                     demoType: 'none',
                     status: 'live',
+                    views: 0,
                 };
             }
         });
