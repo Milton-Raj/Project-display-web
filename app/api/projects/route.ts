@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 export async function GET() {
     try {
         const projects = await getAllProjects();
-        return NextResponse.json(projects);
+        // CRITICAL FIX: Admin expects { projects: [...] } format
+        return NextResponse.json({ projects });
     } catch (error: any) {
         console.error('Error fetching projects:', error);
         return NextResponse.json(
