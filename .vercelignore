@@ -1,0 +1,6 @@
+# Vercel build cache
+.vercel
+.next
+
+# Force clean build
+node_modules
