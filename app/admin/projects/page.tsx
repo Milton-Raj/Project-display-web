@@ -195,7 +195,7 @@ export default function AdminProjectsPage() {
                                     <div className="flex-1 p-6 space-y-4">
                                         <div>
                                             <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">
+                                            <p className="text-sm text-muted-foreground line-clamp-2 break-all">
                                                 {project.description}
                                             </p>
                                         </div>
@@ -218,15 +218,15 @@ export default function AdminProjectsPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex flex-wrap gap-2">
-                                            <Link href={`/projects/${project.slug}`} target="_blank">
-                                                <Button variant="outline" size="sm">
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2">
+                                            <Link href={`/projects/${project.slug}`} target="_blank" className="w-full">
+                                                <Button variant="outline" size="sm" className="w-full">
                                                     <Eye className="w-4 h-4 mr-2" />
                                                     View
                                                 </Button>
                                             </Link>
-                                            <Link href={`/admin/projects/${project.id}/edit`}>
-                                                <Button variant="outline" size="sm">
+                                            <Link href={`/admin/projects/${project.id}/edit`} className="w-full">
+                                                <Button variant="outline" size="sm" className="w-full">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit
                                                 </Button>
@@ -234,6 +234,7 @@ export default function AdminProjectsPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
+                                                className="w-full"
                                                 onClick={() => toggleFeatured(project)}
                                             >
                                                 <Star className={`w-4 h-4 mr-2 ${project.featured ? 'fill-current' : ''}`} />
@@ -242,18 +243,16 @@ export default function AdminProjectsPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
+                                                className="w-full text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive"
                                                 disabled={isDeleting && projectToDelete === project.id}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                     setProjectToDelete(project.id);
                                                 }}
-                                                className="text-destructive hover:bg-destructive/10"
                                             >
                                                 {isDeleting && projectToDelete === project.id ? (
-                                                    <span className="flex items-center">
-                                                        <span className="animate-spin mr-2">⏳</span> Deleting...
-                                                    </span>
+                                                    <span className="animate-spin">⏳</span>
                                                 ) : (
                                                     <>
                                                         <Trash2 className="w-4 h-4 mr-2" />
