@@ -122,7 +122,8 @@ export function ContactContent({ content }: ContactContentProps) {
         } catch (error) {
             console.error("Error submitting form:", error);
             setSubmitStatus("error");
-            setErrorMessage(error instanceof Error ? error.message : "Something went wrong!");
+            const msg = error instanceof Error && error.message ? error.message : "Something went wrong!";
+            setErrorMessage(msg);
         } finally {
             setIsSubmitting(false);
             setTimeout(() => setSubmitStatus("idle"), 5000);

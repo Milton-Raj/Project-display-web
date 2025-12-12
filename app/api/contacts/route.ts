@@ -41,7 +41,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ contact }, { status: 201 });
     } catch (error) {
         console.error('Error creating contact:', error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to create contact' }, { status: 500 });
+        const errorMessage = error instanceof Error && error.message ? error.message : 'Unknown server error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
