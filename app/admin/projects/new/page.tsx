@@ -40,6 +40,17 @@ export default function NewProjectPage() {
     const [techInput, setTechInput] = useState("");
     const [featureInput, setFeatureInput] = useState("");
 
+    // Unified upload state handling
+    const [uploadStatus, setUploadStatus] = useState<{
+        thumbnail: boolean;
+        screenshots: boolean;
+        documents: boolean;
+    }>({
+        thumbnail: false,
+        screenshots: false,
+        documents: false
+    });
+
     // File states
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
     const [docFile, setDocFile] = useState<File | null>(null);
@@ -47,6 +58,7 @@ export default function NewProjectPage() {
     const [isUploadingDoc, setIsUploadingDoc] = useState(false);
     const [isUploading, setUploading] = useState(false);
     const [mobileDemoType, setMobileDemoType] = useState<'ios' | 'android' | 'apk' | 'testflight' | 'none'>('none');
+
 
     // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
@@ -72,12 +84,15 @@ export default function NewProjectPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setUploadStatus(prev => ({ ...prev, thumbnail: true }));
         try {
             const url = await uploadFile(file);
             setFormData({ ...formData, thumbnail: url });
         } catch (error) {
             console.error('Error uploading thumbnail:', error);
             alert('Failed to upload image. Please try again.');
+        } finally {
+            setUploadStatus(prev => ({ ...prev, thumbnail: false }));
         }
     };
 
@@ -480,8 +495,21 @@ export default function NewProjectPage() {
                                         type="file"
                                         accept="image/*"
                                         onChange={handleThumbnailChange}
+                                        disabled={uploadStatus.thumbnail}
                                         className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                     />
+                                    {uploadStatus.thumbnail && (
+                                        <div className="flex items-center text-sm text-primary animate-pulse">
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Uploading...
+                                        </div>
+                                    )}
+                                    {!uploadStatus.thumbnail && formData.thumbnail && (
+                                        <div className="flex items-center text-sm text-green-500">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                                            Upload Complete
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="text-center text-sm text-muted-foreground my-2">- OR -</div>
                                 <div className="flex gap-2">
