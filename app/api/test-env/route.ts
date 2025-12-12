@@ -16,6 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     const report: any = {
+        _version: "1.0.0 (New Diagnostic Tool)",
         timestamp: new Date().toISOString(),
         env_vars: {},
         auth: {},
