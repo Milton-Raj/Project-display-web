@@ -30,7 +30,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <ViewCounter projectId={project.id} slug={project.slug} views={project.views || 0} />
 
             {/* Hero Section */}
-            <section className="relative pt-20 pb-20 overflow-hidden">
+            <section className="relative pt-10 pb-20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
 
                 <div className="container relative mx-auto px-4">
