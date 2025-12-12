@@ -137,7 +137,7 @@ export default function NewProjectPage() {
             return;
         }
 
-        setIsUploading(true);
+        setUploading(true);
         try {
             let docUrl = newDoc.url;
             let previewUrl = newDoc.previewUrl;
@@ -170,7 +170,7 @@ export default function NewProjectPage() {
             console.error("Error uploading document:", error);
             alert("Failed to upload document");
         } finally {
-            setIsUploading(false);
+            setUploading(false);
         }
     };
 
