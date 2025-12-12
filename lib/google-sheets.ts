@@ -187,52 +187,89 @@ export async function createProject(project: any) {
 }
 
 export async function getAllProjects() {
-    const sheets = await getGoogleSheets();
+    try {
+        const sheets = await getGoogleSheets();
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A2:V',
-    });
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Projects!A2:V',
+        });
 
-    const rows = response.data.values || [];
+        const rows = response.data.values || [];
+        console.log(`getAllProjects: Found ${rows.length} rows in sheet`);
 
-    return rows.map((row: any[]) => {
-        const technologies = row[6]?.split(',').map((t: string) => t.trim()) || [];
-        return {
-            id: row[0] || '',
-            title: row[1] || '',
-            slug: row[2] || '',
-            description: row[3] || '',
-            longDescription: row[4] || '',
-            category: row[5]?.includes(',') ? row[5].split(',') : (row[5] || ''),
-            technologies,
-            techStack: technologies,
-            image: row[7] || '',
-            thumbnail: row[7] || '',
-            demoUrl: row[8] || '',
-            githubUrl: row[9] || '',
-            featured: row[10] === 'TRUE',
-            createdAt: row[11] || '',
-            updatedAt: row[11] || '',
+        const projects = rows.map((row: any[], index: number) => {
+            try {
+                const technologies = row[6]?.split(',').map((t: string) => t.trim()) || [];
+                return {
+                    id: row[0] || '',
+                    title: row[1] || '',
+                    slug: row[2] || '',
+                    description: row[3] || '',
+                    longDescription: row[4] || '',
+                    category: row[5]?.includes(',') ? row[5].split(',') : (row[5] || ''),
+                    technologies,
+                    techStack: technologies,
+                    image: row[7] || '',
+                    thumbnail: row[7] || '',
+                    demoUrl: row[8] || '',
+                    githubUrl: row[9] || '',
+                    featured: row[10] === 'TRUE',
+                    createdAt: row[11] || '',
+                    updatedAt: row[11] || '',
 
-            // New Fields Parsing
-            features: row[12] ? row[12].split('|') : [],
-            screenshots: row[13] ? row[13].split(',') : [],
-            documents: row[14] ? JSON.parse(row[14]) : [],
-            videoUrl: row[15] || '',
-            appStoreUrl: row[16] || '',
-            playStoreUrl: row[17] || '',
-            apkUrl: row[18] || '',
-            testFlightUrl: row[19] || '',
-            demoType: row[20] || 'none',
-            status: row[21] || 'live',
+                    // New Fields Parsing
+                    features: row[12] ? row[12].split('|') : [],
+                    screenshots: row[13] ? row[13].split(',') : [],
+                    documents: row[14] ? JSON.parse(row[14]) : [],
+                    videoUrl: row[15] || '',
+                    appStoreUrl: row[16] || '',
+                    playStoreUrl: row[17] || '',
+                    apkUrl: row[18] || '',
+                    testFlightUrl: row[19] || '',
+                    demoType: row[20] || 'none',
+                    status: row[21] || 'live',
+                };
+            } catch (parseError) {
+                console.error(`Error parsing project at row ${index + 2}:`, parseError);
+                console.error('Row data:', row);
+                // Return a minimal project object to avoid breaking the entire list
+                return {
+                    id: row[0] || `error_${index}`,
+                    title: row[1] || 'Error loading project',
+                    slug: row[2] || `error-${index}`,
+                    description: 'Error parsing project data',
+                    longDescription: '',
+                    category: [],
+                    technologies: [],
+                    techStack: [],
+                    image: '',
+                    thumbnail: '',
+                    demoUrl: '',
+                    githubUrl: '',
+                    featured: false,
+                    createdAt: '',
+                    updatedAt: '',
+                    features: [],
+                    screenshots: [],
+                    documents: [],
+                    videoUrl: '',
+                    appStoreUrl: '',
+                    playStoreUrl: '',
+                    apkUrl: '',
+                    testFlightUrl: '',
+                    demoType: 'none',
+                    status: 'live',
+                };
+            }
+        });
 
-            views: 0,
-            challenges: [] as string[],
-            solutions: [] as string[],
-            results: [] as string[],
-        };
-    });
+        console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
+        return projects;
+    } catch (error) {
+        console.error('Error in getAllProjects:', error);
+        throw error;
+    }
 }
 
 export async function getProjectBySlug(slug: string) {
@@ -302,35 +339,46 @@ export async function updateProject(id: string, updates: any) {
 }
 
 export async function deleteProject(id: string) {
-    const sheets = await getGoogleSheets();
+    try {
+        const sheets = await getGoogleSheets();
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A:A',
-    });
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Projects!A:A',
+        });
 
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
 
-    if (rowIndex === -1) return false;
+        if (rowIndex === -1) {
+            console.error(`Project with ID ${id} not found in sheet`);
+            throw new Error('Project not found');
+        }
 
-    await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-            requests: [{
-                deleteDimension: {
-                    range: {
-                        sheetId: 0, // ID for Projects sheet
-                        dimension: 'ROWS',
-                        startIndex: rowIndex,
-                        endIndex: rowIndex + 1,
+        // CRITICAL FIX: Use the correct sheet ID for Projects
+        // Sheet ID can be found in the URL: gid=1222434613
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: SPREADSHEET_ID,
+            requestBody: {
+                requests: [{
+                    deleteDimension: {
+                        range: {
+                            sheetId: 1222434613, // Projects sheet ID (from URL gid parameter)
+                            dimension: 'ROWS',
+                            startIndex: rowIndex,
+                            endIndex: rowIndex + 1,
+                        },
                     },
-                },
-            }],
-        },
-    });
+                }],
+            },
+        });
 
-    return true;
+        console.log(`Successfully deleted project ${id} from row ${rowIndex}`);
+        return true;
+    } catch (error) {
+        console.error('Error in deleteProject:', error);
+        throw error;
+    }
 }
 
 // ==================== PAGES ====================
