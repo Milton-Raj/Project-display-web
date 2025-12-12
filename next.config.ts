@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+// FORCE_CACHE_CLEAR: 2025-12-12-manual-reset-v3
+
 const nextConfig: NextConfig = {
   // Static export disabled to enable admin portal with middleware
   // Re-enable for production deployment if needed
