@@ -159,7 +159,7 @@ export async function createProject(project: any) {
                 project.longDescription || '',
                 Array.isArray(project.category) ? project.category.join(',') : project.category,
                 Array.isArray(project.technologies) ? project.technologies.join(',') : project.technologies,
-                project.image,
+                project.thumbnail || project.image || '',  // Support both field names
                 project.demoUrl || '',
                 project.githubUrl || '',
                 project.featured ? 'TRUE' : 'FALSE',
