@@ -64,35 +64,42 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
         async function loadProject() {
             try {
+                console.log(`Fetching project details for ID: ${projectId}`);
                 const response = await fetch(`/api/projects?id=${projectId}`);
                 const data = await response.json();
 
                 if (data.project && data.project !== null) {
+                    console.log("Project loaded:", data.project);
+
+                    // Default mappings to prevent null/undefined issues
                     setFormData({
                         ...data.project,
-                        // Ensure arrays exist and convert single category to array
-                        category: Array.isArray(data.project.category) ? data.project.category : [data.project.category],
+                        title: data.project.title || "",
+                        description: data.project.description || "",
+                        category: Array.isArray(data.project.category) ? data.project.category : (data.project.category ? [data.project.category] : []),
                         techStack: data.project.techStack || [],
                         features: data.project.features || [],
-                        documents: data.project.documents || [],
+                        // Critical: Ensure documents is always an array
+                        documents: Array.isArray(data.project.documents) ? data.project.documents : [],
                         screenshots: data.project.screenshots || [],
+                        demoType: data.project.demoType || "none",
+                        status: data.project.status || "live",
                     });
 
-                    // Set derived existing state
+                    // Set derived existing state options
                     if (data.project.appStoreUrl) setMobileDemoType('ios');
                     else if (data.project.playStoreUrl) setMobileDemoType('android');
                     else if (data.project.apkUrl) setMobileDemoType('apk');
                     else if (data.project.testFlightUrl) setMobileDemoType('testflight');
                     else setMobileDemoType('none');
+
                 } else {
                     console.error("Project not found in response:", data);
-                    alert("Project not found");
-                    router.push("/admin/projects");
+                    // Use toast if available, or just log
                 }
             } catch (error) {
                 console.error("Failed to load project:", error);
-                alert("Failed to load project");
-                router.push("/admin/projects");
+                alert("Failed to load project details. Please refresh.");
             } finally {
                 setIsLoading(false);
             }

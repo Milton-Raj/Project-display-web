@@ -218,32 +218,38 @@ export default function AdminProjectsPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2">
-                                            <Link href={`/projects/${project.slug}`} target="_blank" className="w-full">
-                                                <Button variant="outline" size="sm" className="w-full">
+                                        <div className="flex items-center gap-2 pt-2">
+                                            <Link href={`/projects/${project.slug}`} target="_blank" className="flex-1">
+                                                <Button size="sm" variant="ghost" className="w-full text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/20">
                                                     <Eye className="w-4 h-4 mr-2" />
                                                     View
                                                 </Button>
                                             </Link>
-                                            <Link href={`/admin/projects/${project.id}/edit`} className="w-full">
-                                                <Button variant="outline" size="sm" className="w-full">
+
+                                            <Link href={`/admin/projects/${project.id}/edit`} className="flex-1">
+                                                <Button size="sm" variant="ghost" className="w-full text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 border border-amber-400/20">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit
                                                 </Button>
                                             </Link>
+
                                             <Button
-                                                variant="outline"
                                                 size="sm"
-                                                className="w-full"
+                                                variant="ghost"
+                                                className={`flex-1 border ${project.featured
+                                                    ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/50 hover:bg-yellow-400/20'
+                                                    : 'text-muted-foreground hover:text-yellow-400 border-white/10 hover:border-yellow-400/50 hover:bg-yellow-400/10'}`}
                                                 onClick={() => toggleFeatured(project)}
+                                                title={project.featured ? "Remove from Featured" : "Add to Featured"}
                                             >
                                                 <Star className={`w-4 h-4 mr-2 ${project.featured ? 'fill-current' : ''}`} />
-                                                {project.featured ? 'Unfeature' : 'Feature'}
+                                                {project.featured ? 'Featured' : 'Feature'}
                                             </Button>
+
                                             <Button
-                                                variant="outline"
                                                 size="sm"
-                                                className="w-full text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive"
+                                                variant="ghost"
+                                                className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/20"
                                                 disabled={isDeleting && projectToDelete === project.id}
                                                 onClick={(e) => {
                                                     e.preventDefault();
