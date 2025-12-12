@@ -221,7 +221,21 @@ export async function getAllProjects() {
                     // New Fields Parsing
                     features: row[12] ? row[12].split('|') : [],
                     screenshots: row[13] ? row[13].split(',') : [],
-                    documents: row[14] ? JSON.parse(row[14]) : [],
+                    documents: (() => {
+                        try {
+                            const raw = row[14];
+                            if (!raw) return [];
+                            // Handle simple URL case (if user pasted raw URL)
+                            if (raw.startsWith('http') && !raw.startsWith('[')) {
+                                return [{ name: 'Document', url: raw, previewUrl: '' }];
+                            }
+                            // Handle JSON format
+                            return JSON.parse(raw);
+                        } catch (e) {
+                            console.warn('Failed to parse documents:', row[14]);
+                            return [];
+                        }
+                    })(),
                     videoUrl: row[15] || '',
                     appStoreUrl: row[16] || '',
                     playStoreUrl: row[17] || '',
