@@ -100,18 +100,21 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
         loadProject();
     }, [projectId, router]);
 
-    const uploadFile = async (file: File, folder: string = "misc") => {
-        try {
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
+    const uploadFile = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
 
-            const storageRef = ref(storage, `${folder}/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            return await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            throw new Error('Upload failed');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
         }
+
+        const data = await response.json();
+        return data.url;
     };
 
     const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

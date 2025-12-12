@@ -10,15 +10,15 @@ import { ProjectsList } from "@/components/projects/ProjectsList";
 import { ContactContent } from "@/components/contact/ContactContent";
 import { WhatIOfferContent } from "@/components/what-i-offer/WhatIOfferContent";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Cache for 1 hour
 
 export default async function HomePage() {
   // Fetch featured projects
-  const featuredProjects = await getFeaturedProjects(3);
-
+  const allFeaturedProjects = await getFeaturedProjects();
+  const featuredProjects = allFeaturedProjects.slice(0, 3);
   // Fetch page content
-  const content = await getPageContent('home');
-  const data = content || {};
+  const pageData = await getPageContent('home');
+  const data = pageData?.content || {};
 
   return (
     <div className="space-y-20">

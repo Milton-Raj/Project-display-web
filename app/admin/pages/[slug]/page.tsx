@@ -12,9 +12,8 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { useParams } from "next/navigation";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { storage, auth } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { signInAnonymously } from "firebase/auth";
+// Firebase imports removed
+
 
 export default function PageEditor() {
     const params = useParams();
@@ -365,49 +364,33 @@ export default function PageEditor() {
                                                         const file = e.target.files?.[0];
                                                         if (!file) return;
 
-                                                        // Create timeout promise
-                                                        const timeoutPromise = new Promise((_, reject) => {
-                                                            setTimeout(() => reject(new Error("Upload timeout - please check your Firebase Storage rules")), 30000);
-                                                        });
-
                                                         try {
                                                             setIsUploading(true);
+                                                            const uploadFormData = new FormData();
+                                                            uploadFormData.append('file', file);
 
-                                                            // Ensure user is signed in anonymously to allow write access
-                                                            if (!auth.currentUser) {
-                                                                try {
-                                                                    await signInAnonymously(auth);
-                                                                } catch (authError) {
-                                                                    console.warn("Anonymous auth failed, trying upload anyway (rules might be open):", authError);
-                                                                }
+                                                            const response = await fetch('/api/upload', {
+                                                                method: 'POST',
+                                                                body: uploadFormData,
+                                                            });
+
+                                                            if (!response.ok) {
+                                                                const errorData = await response.json();
+                                                                throw new Error(errorData.error || 'Upload failed');
                                                             }
 
-                                                            const storageRef = ref(storage, `content/${Date.now()}-${file.name}`);
+                                                            const data = await response.json();
 
-                                                            // Race between upload and timeout
-                                                            const uploadPromise = uploadBytes(storageRef, file);
-                                                            const snapshot = await Promise.race([uploadPromise, timeoutPromise]) as any;
-                                                            const downloadURL = await getDownloadURL(snapshot.ref);
-
-                                                            setFormData({ ...formData, profileImage: downloadURL });
+                                                            setFormData({ ...formData, profileImage: data.url });
                                                             toast({
                                                                 title: "Success",
                                                                 description: "Image uploaded successfully. Click Save to update the page.",
                                                             });
                                                         } catch (error: any) {
                                                             console.error("Upload failed:", error);
-                                                            let errorMessage = error.message || "Please check your internet connection.";
-
-                                                            // Provide helpful error messages
-                                                            if (error.code === 'storage/unauthorized') {
-                                                                errorMessage = "Permission denied. Please deploy the storage.rules file to Firebase.";
-                                                            } else if (error.message?.includes("timeout")) {
-                                                                errorMessage = "Upload timed out. Check Firebase Storage rules and internet connection.";
-                                                            }
-
                                                             toast({
                                                                 title: "Error Uploading Image",
-                                                                description: errorMessage,
+                                                                description: error.message || "Failed to upload image. Please try again.",
                                                                 variant: "destructive",
                                                             });
                                                         } finally {

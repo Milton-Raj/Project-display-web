@@ -23,6 +23,7 @@ export function ContactContent({ content }: ContactContentProps) {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
     const contactInfo = {
         phone: content.phone || process.env.NEXT_PUBLIC_PHONE || "+919151214181",
@@ -68,26 +69,31 @@ export function ContactContent({ content }: ContactContentProps) {
         try {
             let attachmentPath = "";
 
-            // Upload file if selected
+            // Try to upload file if selected (but don't fail if upload fails)
             if (selectedFile) {
-                const fileFormData = new FormData();
-                fileFormData.append('file', selectedFile);
+                try {
+                    const fileFormData = new FormData();
+                    fileFormData.append('file', selectedFile);
 
-                const uploadResponse = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: fileFormData,
-                });
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: fileFormData,
+                    });
 
-                if (!uploadResponse.ok) {
-                    const error = await uploadResponse.json();
-                    throw new Error(error.error || 'Failed to upload file');
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        attachmentPath = uploadData.path;
+                    } else {
+                        console.warn('File upload failed, continuing without attachment');
+                        setUploadError("File upload failed. Message will be sent without attachment.");
+                    }
+                } catch (uploadError) {
+                    console.warn('File upload error, continuing without attachment:', uploadError);
+                    setUploadError("File upload failed. Message will be sent without attachment.");
                 }
-
-                const uploadData = await uploadResponse.json();
-                attachmentPath = uploadData.path;
             }
 
-            // Submit contact form with attachment path
+            // Submit contact form with or without attachment
             const response = await fetch('/api/contacts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -103,15 +109,20 @@ export function ContactContent({ content }: ContactContentProps) {
 
             console.log('Response received:', response.status);
 
-            if (!response.ok) throw new Error('Failed to submit contact form');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to submit contact form');
+            }
 
             setSubmitStatus("success");
             setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
             setSelectedFile(null);
+            setUploadError("");
             console.log('Form submitted successfully');
         } catch (error) {
             console.error("Error submitting form:", error);
             setSubmitStatus("error");
+            setErrorMessage(error instanceof Error ? error.message : "Something went wrong!");
         } finally {
             setIsSubmitting(false);
             setTimeout(() => setSubmitStatus("idle"), 5000);
@@ -313,7 +324,7 @@ export function ContactContent({ content }: ContactContentProps) {
                                 {submitStatus === "error" && (
                                     <div className="p-4 rounded-xl bg-destructive/20 border border-destructive/30 text-destructive">
                                         <p className="font-medium">Something went wrong!</p>
-                                        <p className="text-sm">Please try again or contact me directly.</p>
+                                        <p className="text-sm">{String(errorMessage) || "Please try again or contact me directly."}</p>
                                     </div>
                                 )}
 

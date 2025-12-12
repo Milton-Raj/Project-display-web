@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ExternalLink, Github, Calendar, Layers, CheckCircle, FileText, Lock } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calendar, Layers, CheckCircle, FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { ViewCounter } from "@/components/projects/ViewCounter";
@@ -102,7 +102,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                     Tech Stack
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {project.techStack.map((tech) => (
+                                    {project.techStack.map((tech: string) => (
                                         <Badge key={tech} variant="secondary" className="bg-white/5 hover:bg-white/10">
                                             {tech}
                                         </Badge>

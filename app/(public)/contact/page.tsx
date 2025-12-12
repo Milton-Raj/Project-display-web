@@ -1,7 +1,7 @@
 import { getPageContent } from "@/lib/database";
 import { ContactContent } from "@/components/contact/ContactContent";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Cache for 1 hour
 
 export default async function ContactPage() {
     const content = await getPageContent('contact');

@@ -51,19 +51,29 @@ export default function NewProjectPage() {
     // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
 
+    const uploadFile = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+        return data.url;
+    };
+
     const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         try {
-            // Upload to Firebase Storage
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
-
-            const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(snapshot.ref);
-
+            const url = await uploadFile(file);
             setFormData({ ...formData, thumbnail: url });
         } catch (error) {
             console.error('Error uploading thumbnail:', error);
@@ -77,16 +87,9 @@ export default function NewProjectPage() {
 
         setUploading(true);
         try {
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
-
-            const uploadPromises = files.map(async (file) => {
-                const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(storageRef, file);
-                return getDownloadURL(snapshot.ref);
-            });
-
+            const uploadPromises = files.map(file => uploadFile(file));
             const urls = await Promise.all(uploadPromises);
+
             setFormData(prev => ({
                 ...prev,
                 screenshots: [...prev.screenshots, ...urls]
@@ -105,13 +108,7 @@ export default function NewProjectPage() {
 
         setUploading(true);
         try {
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
-
-            const storageRef = ref(storage, `documents/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(snapshot.ref);
-
+            const url = await uploadFile(file);
             setFormData(prev => ({
                 ...prev,
                 documents: [...(prev.documents || []), { name: file.name, url }]
@@ -139,19 +136,7 @@ export default function NewProjectPage() {
         }
     };
 
-    const uploadFile = async (file: File, folder: string = "misc") => {
-        try {
-            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const { storage } = await import('@/lib/firebase');
-
-            const storageRef = ref(storage, `${folder}/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            return await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            throw new Error('Upload failed');
-        }
-    };
+    // uploadFile function moved up
 
     const addDocument = async () => {
         if (!newDoc.name) {
@@ -231,11 +216,16 @@ export default function NewProjectPage() {
                 })
             });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create project');
+            }
+
             router.push("/admin/projects");
             router.refresh();
         } catch (error) {
             console.error("Failed to create project:", error);
-            alert("Failed to create project");
+            alert(error instanceof Error ? error.message : "Failed to create project");
             setIsLoading(false);
         }
     };
