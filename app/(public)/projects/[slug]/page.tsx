@@ -60,7 +60,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                 <h1 className="text-4xl md:text-5xl font-bold gradient-text-primary leading-tight">
                                     {project.title}
                                 </h1>
-                                <div className="p-6 rounded-2xl glass border border-white/5 bg-white/5 backdrop-blur-sm">
+                                <div className="mt-4">
                                     <p className="text-lg md:text-xl text-muted-foreground leading-relaxed break-words">
                                         {project.description}
                                     </p>
