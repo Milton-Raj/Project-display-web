@@ -159,7 +159,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                             <Card className="p-8 glass">
                                 <h2 className="text-2xl font-bold mb-6">Project Documents</h2>
                                 <div className="grid gap-6">
-                                    {project.documents.map((doc, index) => (
+                                    {project.documents.map((doc: any, index: number) => (
                                         <div key={index} className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold flex items-center">
