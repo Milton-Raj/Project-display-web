@@ -146,6 +146,10 @@ export async function createProject(project: any) {
     const id = `project_${Date.now()}`;
     const createdAt = new Date().toISOString();
 
+    // Map frontend field names to backend expectations
+    const technologies = project.techStack || project.technologies || [];
+    const thumbnail = project.thumbnail || project.image || '';
+
     await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: 'Projects!A:V',
@@ -158,8 +162,8 @@ export async function createProject(project: any) {
                 project.description,
                 project.longDescription || '',
                 Array.isArray(project.category) ? project.category.join(',') : project.category,
-                Array.isArray(project.technologies) ? project.technologies.join(',') : project.technologies,
-                project.thumbnail || project.image || '',  // Support both field names
+                Array.isArray(technologies) ? technologies.join(',') : technologies,
+                thumbnail,
                 project.demoUrl || '',
                 project.githubUrl || '',
                 project.featured ? 'TRUE' : 'FALSE',
