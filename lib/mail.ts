@@ -40,12 +40,12 @@ export async function sendContactEmail(data: {
                 <p><strong>Subject:</strong> ${subject}</p>
                 <p><strong>Message:</strong></p>
                 <p>${message.replace(/\n/g, '<br>')}</p>
-                ${attachment ? `<p><strong>Attachment:</strong> Document attached</p>` : ''}
+                ${attachment ? `<p><strong>Attachment:</strong> <a href="${attachment}">View Document</a></p>` : ''}
             `,
         };
 
-        // Add attachment if present
-        if (attachment) {
+        // Only attach if it's a local file (not starting with http)
+        if (attachment && !attachment.startsWith('http')) {
             const filepath = join(process.cwd(), 'public', attachment);
             const filename = attachment.split('/').pop() || 'document';
 
