@@ -1,7 +1,7 @@
 import { getAllProjects } from "@/lib/database";
 import { ProjectsList } from "@/components/projects/ProjectsList";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 60; // Cache for 1 minute (was 1 hour)
 
 export default async function ProjectsPage() {
     const projects = await getAllProjects();
