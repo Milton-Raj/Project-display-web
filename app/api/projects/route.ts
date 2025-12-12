@@ -1,52 +1,65 @@
 import { NextResponse } from 'next/server';
-import { getAllProjects, createProject, updateProject, deleteProject, getProjectById } from '@/lib/database';
+import { createProject, getAllProjects, getProjectBySlug, updateProject, deleteProject } from '@/lib/database';
+import { revalidatePath } from 'next/cache';
 
-export const dynamic = 'force-dynamic';
-
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (id) {
-        const project = await getProjectById(id);
-        return NextResponse.json({ project });
+export async function GET() {
+    try {
+        const projects = await getAllProjects();
+        return NextResponse.json(projects);
+    } catch (error: any) {
+        console.error('Error fetching projects:', error);
+        return NextResponse.json(
+            { error: 'Failed to fetch projects' },
+            { status: 500 }
+        );
     }
-
-    const projects = await getAllProjects();
-    return NextResponse.json({ projects });
 }
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const project = await createProject(body);
-        return NextResponse.json({ project }, { status: 201 });
-    } catch (error) {
+        const data = await request.json();
+        const project = await createProject(data);
+
+        // Revalidate the public projects page to show the new project immediately
+        revalidatePath('/projects');
+        revalidatePath('/');
+
+        return NextResponse.json(project);
+    } catch (error: any) {
         console.error('Error creating project:', error);
-        const errorMessage = error instanceof Error && error.message ? error.message : 'Unknown server error during project creation';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Failed to create project' },
+            { status: 500 }
+        );
     }
 }
 
 export async function PUT(request: Request) {
     try {
-        const body = await request.json();
-        const { id, ...updates } = body;
+        const data = await request.json();
+        const { id, ...updates } = data;
 
         if (!id) {
-            return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Project ID is required' },
+                { status: 400 }
+            );
         }
 
         const project = await updateProject(id, updates);
 
-        if (!project) {
-            return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-        }
+        // Revalidate pages to show the updated project immediately
+        revalidatePath('/projects');
+        revalidatePath(`/projects/${project.slug}`);
+        revalidatePath('/');
 
-        return NextResponse.json({ project });
-    } catch (error) {
+        return NextResponse.json(project);
+    } catch (error: any) {
         console.error('Error updating project:', error);
-        return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Failed to update project' },
+            { status: 500 }
+        );
     }
 }
 
@@ -56,20 +69,24 @@ export async function DELETE(request: Request) {
         const id = searchParams.get('id');
 
         if (!id) {
-            return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Project ID is required' },
+                { status: 400 }
+            );
         }
 
-        console.log(`API: Deleting project with ID: ${id}`);
-        const success = await deleteProject(id);
-        console.log(`API: Delete result for ${id}: ${success}`);
+        await deleteProject(id);
 
-        if (!success) {
-            return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-        }
+        // Revalidate pages to remove the deleted project immediately
+        revalidatePath('/projects');
+        revalidatePath('/');
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error deleting project:', error);
-        return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Failed to delete project' },
+            { status: 500 }
+        );
     }
 }
