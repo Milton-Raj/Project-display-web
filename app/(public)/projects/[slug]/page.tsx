@@ -145,7 +145,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                         <Card className="p-8 glass">
                             <h2 className="text-2xl font-bold mb-6">Key Features</h2>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                {project.features.map((feature, index) => (
+                                {project.features.map((feature: string, index: number) => (
                                     <div key={index} className="flex items-start p-4 rounded-xl bg-white/5 border border-white/5">
                                         <CheckCircle className="w-5 h-5 text-primary mr-3 mt-0.5" />
                                         <span className="text-sm text-muted-foreground">{feature}</span>
