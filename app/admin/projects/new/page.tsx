@@ -212,6 +212,10 @@ export default function NewProjectPage() {
         e.preventDefault();
         setIsLoading(true);
 
+        // Safety timeout to prevent infinite loading
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
         try {
             let thumbnailUrl = formData.thumbnail;
 
@@ -228,8 +232,11 @@ export default function NewProjectPage() {
                     ...formData,
                     thumbnail: thumbnailUrl,
                     slug,
-                })
+                }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -238,9 +245,19 @@ export default function NewProjectPage() {
 
             router.push("/admin/projects");
             router.refresh();
-        } catch (error) {
+        } catch (error: any) {
+            clearTimeout(timeoutId);
             console.error("Failed to create project:", error);
-            alert(error instanceof Error ? error.message : "Failed to create project");
+
+            let message = "Failed to create project";
+            if (error.name === 'AbortError') {
+                message = "Request timed out. Please check your connection or try again.";
+            } else if (error instanceof Error) {
+                message = error.message;
+            }
+
+            alert(message);
+        } finally {
             setIsLoading(false);
         }
     };
