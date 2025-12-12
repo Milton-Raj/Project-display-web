@@ -55,14 +55,14 @@ export default function NewProjectPage() {
 
     const [loadingMessage, setLoadingMessage] = useState("");
 
-    // File states - simplified, we mostly just need the URLs now
+    // File states
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-    // Removed docFile/previewFile states as we upload immediately now
+    const [docFile, setDocFile] = useState<File | null>(null);
+    const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [isUploading, setUploading] = useState(false);
     const [mobileDemoType, setMobileDemoType] = useState<'ios' | 'android' | 'apk' | 'testflight' | 'none'>('none');
 
-
-    // Document state - stored URLs directly
+    // Document state
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
 
     const uploadFile = async (file: File) => {
@@ -82,19 +82,11 @@ export default function NewProjectPage() {
         return data.url;
     };
 
-    const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadStatus(prev => ({ ...prev, thumbnail: true }));
-        try {
-            const url = await uploadFile(file);
-            setFormData({ ...formData, thumbnail: url });
-        } catch (error) {
-            console.error('Error uploading thumbnail:', error);
-            alert('Failed to upload image. Please try again.');
-        } finally {
-            setUploadStatus(prev => ({ ...prev, thumbnail: false }));
+    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setThumbnailFile(file);
+            setFormData({ ...formData, thumbnail: '' }); // Clear manual URL
         }
     };
 
@@ -119,68 +111,67 @@ export default function NewProjectPage() {
         }
     };
 
-    const handleDocFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setNewDoc(prev => ({ ...prev, url: "" })); // Clear previous URL
-        setUploadStatus(prev => ({ ...prev, docFile: true }));
-
-        try {
-            const url = await uploadFile(file);
-            setNewDoc(prev => ({ ...prev, url }));
-        } catch (error) {
-            console.error('Error uploading document:', error);
-            alert('Failed to upload document file.');
-            e.target.value = ""; // Reset input
-        } finally {
-            setUploadStatus(prev => ({ ...prev, docFile: false }));
+    const handleDocFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setDocFile(e.target.files[0]);
+            setNewDoc(prev => ({ ...prev, url: '' })); // Clear manual URL
         }
     };
 
-    const handlePreviewFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setNewDoc(prev => ({ ...prev, previewUrl: "" })); // Clear previous
-        setUploadStatus(prev => ({ ...prev, docPreview: true }));
-
-        try {
-            const url = await uploadFile(file);
-            setNewDoc(prev => ({ ...prev, previewUrl: url }));
-        } catch (error) {
-            console.error('Error uploading preview:', error);
-            alert('Failed to upload preview image.');
-            e.target.value = ""; // Reset input
-        } finally {
-            setUploadStatus(prev => ({ ...prev, docPreview: false }));
+    const handlePreviewFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setPreviewFile(file);
+            setNewDoc(prev => ({ ...prev, previewUrl: '' })); // Clear manual URL
         }
     };
 
-    const addDocument = () => {
+    const addDocument = async () => {
         if (!newDoc.name) {
             alert("Please enter a document name");
             return;
         }
 
-        if (!newDoc.url) {
+        if (!docFile && !newDoc.url) {
             alert("Please upload a document file or enter a URL");
             return;
         }
 
-        setFormData({
-            ...formData,
-            documents: [...formData.documents, newDoc],
-        });
+        setIsUploading(true);
+        try {
+            let docUrl = newDoc.url;
+            let previewUrl = newDoc.previewUrl;
 
-        // Reset form
-        setNewDoc({ name: "", url: "", previewUrl: "" });
+            // Upload files if selected
+            if (docFile) {
+                docUrl = await uploadFile(docFile);
+            }
+            if (previewFile) {
+                previewUrl = await uploadFile(previewFile);
+            }
 
-        // Reset file inputs manually
-        const docInput = document.getElementById('doc-upload') as HTMLInputElement;
-        const previewInput = document.getElementById('preview-upload') as HTMLInputElement;
-        if (docInput) docInput.value = '';
-        if (previewInput) previewInput.value = '';
+            setFormData({
+                ...formData,
+                documents: [...formData.documents, { name: newDoc.name, url: docUrl, previewUrl }],
+            });
+
+            // Reset form
+            setNewDoc({ name: "", url: "", previewUrl: "" });
+            setDocFile(null);
+            setPreviewFile(null);
+
+            // Reset file inputs manually
+            const docInput = document.getElementById('doc-upload') as HTMLInputElement;
+            const previewInput = document.getElementById('preview-upload') as HTMLInputElement;
+            if (docInput) docInput.value = '';
+            if (previewInput) previewInput.value = '';
+
+        } catch (error) {
+            console.error("Error uploading document:", error);
+            alert("Failed to upload document");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const removeDocument = (index: number) => {
@@ -193,19 +184,22 @@ export default function NewProjectPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (uploadStatus.thumbnail || uploadStatus.screenshots || uploadStatus.docFile || uploadStatus.docPreview) {
-            alert("Please wait for all uploads to finish before saving.");
+        if (uploadStatus.screenshots) {
+            alert("Please wait for screenshots to finish uploading.");
             return;
         }
 
         setIsLoading(true);
         setLoadingMessage("Preparing data...");
 
-        // Safety timeout to prevent infinite loading
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
-
         try {
+            // Upload thumbnail if new file selected
+            let thumbnailUrl = formData.thumbnail;
+            if (thumbnailFile) {
+                setLoadingMessage("Uploading thumbnail...");
+                thumbnailUrl = await uploadFile(thumbnailFile);
+            }
+
             const slug = slugify(formData.title);
 
             setLoadingMessage("Saving project...");
@@ -214,12 +208,10 @@ export default function NewProjectPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
+                    thumbnail: thumbnailUrl,
                     slug,
                 }),
-                signal: controller.signal
             });
-
-            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -229,17 +221,8 @@ export default function NewProjectPage() {
             router.push("/admin/projects");
             router.refresh();
         } catch (error: any) {
-            clearTimeout(timeoutId);
             console.error("Failed to create project:", error);
-
-            let message = "Failed to create project";
-            if (error.name === 'AbortError') {
-                message = "Request timed out. Please check your connection or try again.";
-            } else if (error instanceof Error) {
-                message = error.message;
-            }
-
-            alert(message);
+            alert(error.message || "Failed to create project");
         } finally {
             setIsLoading(false);
             setLoadingMessage("");
@@ -469,10 +452,10 @@ export default function NewProjectPage() {
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Thumbnail Image</label>
                                 {/* Image Preview */}
-                                {formData.thumbnail && (
+                                {(formData.thumbnail || thumbnailFile) && (
                                     <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white/10 shadow-lg group">
                                         <img
-                                            src={formData.thumbnail}
+                                            src={thumbnailFile ? URL.createObjectURL(thumbnailFile) : formData.thumbnail}
                                             alt="Thumbnail preview"
                                             className="w-full h-full object-cover"
                                         />
@@ -480,6 +463,7 @@ export default function NewProjectPage() {
                                             type="button"
                                             onClick={() => {
                                                 setFormData({ ...formData, thumbnail: "" });
+                                                setThumbnailFile(null);
                                                 const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
                                                 if (fileInput) fileInput.value = "";
                                             }}
@@ -491,32 +475,22 @@ export default function NewProjectPage() {
                                     </div>
                                 )}
 
-                                <div className="flex gap-4 items-center">
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleThumbnailChange}
-                                        disabled={uploadStatus.thumbnail}
-                                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                    />
-                                    {uploadStatus.thumbnail && (
-                                        <div className="flex items-center text-sm text-primary animate-pulse">
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Uploading...
-                                        </div>
-                                    )}
-                                    {!uploadStatus.thumbnail && formData.thumbnail && (
-                                        <div className="flex items-center text-sm text-green-500">
-                                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                                            Upload Complete
-                                        </div>
-                                    )}
-                                </div>
+                                <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleThumbnailChange}
+                                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                />
                                 <div className="text-center text-sm text-muted-foreground my-2">- OR -</div>
                                 <div className="flex gap-2">
                                     <Input
                                         value={formData.thumbnail}
-                                        onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, thumbnail: e.target.value });
+                                            setThumbnailFile(null); // Clear file if user types URL
+                                            const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
+                                            if (fileInput) fileInput.value = "";
+                                        }}
                                         placeholder="Enter image URL directly"
                                     />
                                     <Button
@@ -525,6 +499,7 @@ export default function NewProjectPage() {
                                         onClick={() => {
                                             const seed = Math.random().toString(36).substring(7);
                                             setFormData({ ...formData, thumbnail: `https://picsum.photos/seed/${seed}/800/600` });
+                                            setThumbnailFile(null); // Clear file if randomized
                                         }}
                                         title="Generate random stable image"
                                     >
@@ -702,7 +677,7 @@ export default function NewProjectPage() {
 
                                 <div className="grid gap-4 p-4 rounded-lg border border-dashed border-white/20">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Document Name *</label>
+                                        <label className="text-sm font-medium">Document Name</label>
                                         <Input
                                             value={newDoc.name}
                                             onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
@@ -711,30 +686,23 @@ export default function NewProjectPage() {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Document File (PDF/Doc) *</label>
+                                            <label className="text-sm font-medium">Document File (PDF/Doc)</label>
                                             <Input
                                                 id="doc-upload"
                                                 type="file"
+                                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                                 onChange={handleDocFileChange}
-                                                disabled={uploadStatus.docFile}
                                                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                             />
-                                            {uploadStatus.docFile && (
-                                                <div className="flex items-center text-sm text-primary animate-pulse">
-                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                    Uploading Document...
-                                                </div>
-                                            )}
-                                            {!uploadStatus.docFile && newDoc.url && (
-                                                <div className="flex items-center text-sm text-green-500">
-                                                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                                                    File Uploaded
-                                                </div>
-                                            )}
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.url}
-                                                onChange={(e) => setNewDoc({ ...newDoc, url: e.target.value })}
+                                                onChange={(e) => {
+                                                    setNewDoc({ ...newDoc, url: e.target.value });
+                                                    setDocFile(null); // Clear file if typing URL
+                                                    const input = document.getElementById('doc-upload') as HTMLInputElement;
+                                                    if (input) input.value = '';
+                                                }}
                                                 placeholder="Enter URL directly"
                                                 className="h-9 text-xs"
                                             />
@@ -746,28 +714,17 @@ export default function NewProjectPage() {
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handlePreviewFileChange}
-                                                disabled={uploadStatus.docPreview}
                                                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                             />
-                                            {uploadStatus.docPreview && (
-                                                <div className="flex items-center text-sm text-primary animate-pulse">
-                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                    Uploading Preview...
-                                                </div>
-                                            )}
-                                            {!uploadStatus.docPreview && newDoc.previewUrl && (
-                                                <div className="flex items-center text-sm text-green-500">
-                                                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                                                    Preview Uploaded
-                                                    {newDoc.previewUrl.startsWith('http') && (
-                                                        <img src={newDoc.previewUrl} alt="Preview" className="h-8 w-8 ml-2 rounded object-cover" />
-                                                    )}
-                                                </div>
-                                            )}
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.previewUrl}
-                                                onChange={(e) => setNewDoc({ ...newDoc, previewUrl: e.target.value })}
+                                                onChange={(e) => {
+                                                    setNewDoc({ ...newDoc, previewUrl: e.target.value });
+                                                    setPreviewFile(null); // Clear file if typing URL
+                                                    const input = document.getElementById('preview-upload') as HTMLInputElement;
+                                                    if (input) input.value = '';
+                                                }}
                                                 placeholder="Enter URL directly"
                                                 className="h-9 text-xs"
                                             />
@@ -778,10 +735,19 @@ export default function NewProjectPage() {
                                         onClick={addDocument}
                                         variant="secondary"
                                         className="w-full"
-                                        disabled={uploadStatus.docFile || uploadStatus.docPreview}
+                                        disabled={isUploading}
                                     >
-                                        <Upload className="w-4 h-4 mr-2" />
-                                        Add Document
+                                        {isUploading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Uploading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload className="w-4 h-4 mr-2" />
+                                                Add Document
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
