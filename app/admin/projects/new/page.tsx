@@ -132,10 +132,11 @@ export default function NewProjectPage() {
             return;
         }
 
-        if (!docFile && !newDoc.url) {
-            alert("Please upload a document file or enter a URL");
-            return;
-        }
+        // Mandatory check removed as per user request
+        // if (!docFile && !newDoc.url) {
+        //     alert("Please upload a document file or enter a URL");
+        //     return;
+        // }
 
         setUploading(true);
         try {

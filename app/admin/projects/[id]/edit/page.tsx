@@ -156,10 +156,11 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
             return;
         }
 
-        if (!docFile && !newDoc.url) {
-            alert("Please upload a document file or enter a URL");
-            return;
-        }
+        // Mandatory check removed as per user request
+        // if (!docFile && !newDoc.url) {
+        //     alert("Please upload a document file or enter a URL");
+        //     return;
+        // }
 
         setIsUploadingDoc(true);
         try {
