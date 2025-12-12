@@ -23,7 +23,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ project }, { status: 201 });
     } catch (error) {
         console.error('Error creating project:', error);
-        return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+        const errorMessage = error instanceof Error && error.message ? error.message : 'Unknown server error during project creation';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
