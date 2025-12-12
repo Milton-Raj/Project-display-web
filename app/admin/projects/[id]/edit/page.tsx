@@ -683,7 +683,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
                                 <div className="grid gap-4 p-4 rounded-lg border border-dashed border-white/20">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Document Name *</label>
+                                        <label className="text-sm font-medium">Document Name</label>
                                         <Input
                                             value={newDoc.name}
                                             onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
@@ -692,10 +692,11 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Document File (PDF/Doc) *</label>
+                                            <label className="text-sm font-medium">Document File (PDF/Doc)</label>
                                             <Input
                                                 id="doc-upload"
                                                 type="file"
+                                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                                 onChange={handleDocFileChange}
                                                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                             />
