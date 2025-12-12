@@ -121,14 +121,16 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setThumbnailFile(file);
-            // Show immediate preview
-            setFormData({ ...formData, thumbnail: URL.createObjectURL(file) });
+            // Clear manual URL input when file is selected
+            setFormData({ ...formData, thumbnail: '' });
         }
     };
 
     const handleDocFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setDocFile(e.target.files[0]);
+            // Clear manual URL input when file is selected
+            setNewDoc(prev => ({ ...prev, url: '' }));
         }
     };
 
@@ -136,8 +138,8 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setPreviewFile(file);
-            // Show immediate preview for doc preview
-            setNewDoc({ ...newDoc, previewUrl: URL.createObjectURL(file) });
+            // Clear manual URL input when file is selected
+            setNewDoc(prev => ({ ...prev, previewUrl: '' }));
         }
     };
 
@@ -465,10 +467,10 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                 <label className="text-sm font-medium">Thumbnail Image</label>
 
                                 {/* Image Preview */}
-                                {formData.thumbnail && (
+                                {(formData.thumbnail || thumbnailFile) && (
                                     <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-white/10 shadow-lg group">
                                         <img
-                                            src={formData.thumbnail}
+                                            src={thumbnailFile ? URL.createObjectURL(thumbnailFile) : formData.thumbnail}
                                             alt="Thumbnail preview"
                                             className="w-full h-full object-cover"
                                         />
@@ -476,6 +478,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                             type="button"
                                             onClick={() => {
                                                 setFormData({ ...formData, thumbnail: "" });
+                                                setThumbnailFile(null);
                                                 const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
                                                 if (fileInput) fileInput.value = "";
                                             }}
@@ -503,7 +506,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                         <div className="flex gap-2">
                                             <Input
                                                 value={formData.thumbnail}
-                                                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, thumbnail: e.target.value });
+                                                    setThumbnailFile(null); // Clear file if user types URL
+                                                    const input = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
+                                                    if (input) input.value = '';
+                                                }}
                                                 placeholder="Enter image URL directly"
                                                 className="text-sm"
                                             />
@@ -703,7 +711,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.url}
-                                                onChange={(e) => setNewDoc({ ...newDoc, url: e.target.value })}
+                                                onChange={(e) => {
+                                                    setNewDoc({ ...newDoc, url: e.target.value });
+                                                    setDocFile(null); // Clear file if user types URL
+                                                    const input = document.getElementById('doc-upload') as HTMLInputElement;
+                                                    if (input) input.value = '';
+                                                }}
                                                 placeholder="Enter URL directly"
                                                 className="h-9 text-xs"
                                             />
@@ -720,7 +733,12 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.previewUrl}
-                                                onChange={(e) => setNewDoc({ ...newDoc, previewUrl: e.target.value })}
+                                                onChange={(e) => {
+                                                    setNewDoc({ ...newDoc, previewUrl: e.target.value });
+                                                    setPreviewFile(null); // Clear file if user types URL
+                                                    const input = document.getElementById('preview-upload') as HTMLInputElement;
+                                                    if (input) input.value = '';
+                                                }}
                                                 placeholder="Enter URL directly"
                                                 className="h-9 text-xs"
                                             />
