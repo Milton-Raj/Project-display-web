@@ -308,6 +308,7 @@ export async function getFeaturedProjects() {
 export async function updateProject(id: string, updates: any) {
     const sheets = await getGoogleSheets();
 
+    // 1. Find the row index first
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: 'Projects!A:A',
@@ -318,44 +319,81 @@ export async function updateProject(id: string, updates: any) {
 
     if (rowIndex === -1) return null;
 
-    // Map frontend field names to backend expectations
-    const technologies = updates.techStack || updates.technologies || [];
-    const thumbnail = updates.thumbnail || updates.image || '';
-
-    // Ensure we preserve existing values if not provided in updates, 
-    // though usually 'updates' contains the full form data.
-    // For arrays/objects, default to empty/none if explicit update is missing but intended to be cleared.
-
-    const updatedRow = [
-        id,
-        updates.title,
-        updates.slug,
-        updates.description,
-        updates.longDescription || '',
-        Array.isArray(updates.category) ? updates.category.join(',') : updates.category,
-        Array.isArray(technologies) ? technologies.join(',') : technologies,
-        thumbnail, // Use the resolved thumbnail
-        updates.demoUrl || '',
-        updates.githubUrl || '',
-        updates.featured ? 'TRUE' : 'FALSE',
-        updates.createdAt || new Date().toISOString(),
-        // New Fields
-        Array.isArray(updates.features) ? updates.features.join('|') : '',
-        Array.isArray(updates.screenshots) ? updates.screenshots.join(',') : '',
-        JSON.stringify(updates.documents || []),
-        updates.videoUrl || '',
-        updates.appStoreUrl || '',
-        updates.playStoreUrl || '',
-        updates.apkUrl || '',
-        updates.testFlightUrl || '',
-        updates.demoType || 'none',
-        updates.status || 'live',
-    ];
-
-    console.log(`Updating project ${id} with:`, {
-        demoType: updates.demoType,
-        docCount: updates.documents?.length
+    // 2. Fetch the EXISTING full row data to ensure we don't overwrite with missing defaults
+    const fullRowResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Projects!A${rowIndex + 1}:V${rowIndex + 1}`,
     });
+
+    const existingRow = fullRowResponse.data.values?.[0] || [];
+
+    // 3. Helper to safe-parse existing JSON
+    const parseJSON = (str: string, fallback: any) => {
+        try { return str ? JSON.parse(str) : fallback; } catch { return fallback; }
+    };
+
+    // 4. Extract existing values for merging
+    // Note: This mapping MUST match the read sequence in getAllProjects
+    const existingData = {
+        title: existingRow[1],
+        slug: existingRow[2],
+        description: existingRow[3],
+        longDescription: existingRow[4],
+        category: existingRow[5]?.split(','),
+        techStack: existingRow[6]?.split(','),
+        thumbnail: existingRow[7],
+        demoUrl: existingRow[8],
+        githubUrl: existingRow[9],
+        featured: existingRow[10] === 'TRUE',
+        createdAt: existingRow[11],
+        features: existingRow[12]?.split('|'),
+        screenshots: existingRow[13]?.split(','),
+        documents: parseJSON(existingRow[14], []),
+        videoUrl: existingRow[15],
+        appStoreUrl: existingRow[16],
+        playStoreUrl: existingRow[17],
+        apkUrl: existingRow[18],
+        testFlightUrl: existingRow[19],
+        demoType: existingRow[20],
+        status: existingRow[21],
+    };
+
+    // 5. Merge Updates: Prefer 'updates', fallback to 'existingData'
+    // For arrays/objects, we trust the 'updates' if provided, otherwise keep existing.
+    // We explicitly handle aliasing here.
+    const merged = {
+        ...existingData,
+        ...updates,
+        // Handle aliases: Frontend sends techStack/thumbnail, so use those if present
+        techStack: updates.techStack || updates.technologies || existingData.techStack || [],
+        thumbnail: updates.thumbnail || updates.image || existingData.thumbnail || '',
+    };
+
+    // 6. Constuct the Write Row
+    const updatedRow = [
+        id, // 0: ID (Immutable)
+        merged.title, // 1
+        merged.slug, // 2
+        merged.description, // 3
+        merged.longDescription || '', // 4
+        Array.isArray(merged.category) ? merged.category.join(',') : merged.category, // 5
+        Array.isArray(merged.techStack) ? merged.techStack.join(',') : merged.techStack, // 6
+        merged.thumbnail, // 7
+        merged.demoUrl || '', // 8
+        merged.githubUrl || '', // 9
+        merged.featured ? 'TRUE' : 'FALSE', // 10
+        merged.createdAt, // 11 (Immutable)
+        Array.isArray(merged.features) ? merged.features.join('|') : '', // 12
+        Array.isArray(merged.screenshots) ? merged.screenshots.join(',') : '', // 13
+        JSON.stringify(merged.documents || []), // 14
+        merged.videoUrl || '', // 15
+        merged.appStoreUrl || '', // 16
+        merged.playStoreUrl || '', // 17
+        merged.apkUrl || '', // 18
+        merged.testFlightUrl || '', // 19
+        merged.demoType || 'none', // 20
+        merged.status || 'live', // 21
+    ];
 
     await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
@@ -366,7 +404,7 @@ export async function updateProject(id: string, updates: any) {
         },
     });
 
-    return { id, ...updates };
+    return { id, ...merged };
 }
 
 export async function deleteProject(id: string) {
