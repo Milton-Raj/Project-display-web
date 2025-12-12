@@ -10,7 +10,7 @@ import { ProjectsList } from "@/components/projects/ProjectsList";
 import { ContactContent } from "@/components/contact/ContactContent";
 import { WhatIOfferContent } from "@/components/what-i-offer/WhatIOfferContent";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 60; // Cache for 60 seconds
 
 export default async function HomePage() {
   // Fetch featured projects

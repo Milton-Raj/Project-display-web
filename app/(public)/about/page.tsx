@@ -1,7 +1,7 @@
 import { getPageContent } from "@/lib/database";
 import { AboutContent } from "@/components/about/AboutContent";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 60; // Cache for 60 seconds
 
 export default async function AboutPage() {
     const content = await getPageContent('about');

@@ -2,7 +2,73 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Code, Users, FileText, CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-export function WhatIOfferContent() {
+interface WhatIOfferContentProps {
+    content?: any;
+}
+
+export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
+    // Default Fallbacks consistent with original hardcoded values
+    const services = content.services || [
+        {
+            title: "Custom Web & Mobile App Development",
+            description: "Build scalable, high-performance applications tailored to your business needs.",
+            provides: "Custom-built web apps\nCustom-built mobile apps (Android / iOS)\nReady-made business apps\nFull support until deployment",
+            audience: "Entrepreneurs launching a business\nSMEs scaling operations",
+            icon: "code"
+        },
+        {
+            title: "Interview Training for Students & Employees",
+            description: "Result-oriented coaching to crack technical and HR rounds with confidence.",
+            provides: "Interview strategy coaching\nTechnical + HR practice rounds\nCommunication training\nReal-world mock scenarios",
+            audience: "Freshers & Job Seekers\nProfessionals switching careers",
+            icon: "users"
+        },
+        {
+            title: "Resume / Job Portal / LinkedIn Optimization",
+            description: "Stand out to recruiters with ATS-friendly resumes and optimized profiles.",
+            provides: "ATS-friendly resume writing\nLinkedIn profile optimization\nJob portal complete setup\nKeyword strategy for search",
+            audience: "Job Seekers\nStudents preparing for placements",
+            icon: "file-text"
+        }
+    ];
+
+    const whyChooseMe = content.whyChooseMe || [
+        { title: "Hands-on Experience", desc: "Real-world expertise in software development and delivery." },
+        { title: "500+ Trained", desc: "Helped hundreds of students and employees achieve their career goals." },
+        { title: "Full Support", desc: "From the first call to final delivery, I'm with you every step." },
+        { title: "Transparent Pricing", desc: "No hidden costs. Zero outsourcing. You work directly with me." },
+        { title: "Real Results", desc: "Proven track record of successful apps and hired candidates." },
+        { title: "Custom Solutions", desc: "Tailored strategies and code, not generic templates." }
+    ];
+
+    const showcaseItems = content.showcaseItems || [
+        {
+            title: "Business Apps Delivered",
+            description: "Custom solutions helping businesses scale operations efficiently."
+        },
+        {
+            title: "Career Transformations",
+            description: "Students placed in top companies after training and profile optimization."
+        }
+    ];
+
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'users': return <Users className="w-7 h-7 text-accent" />;
+            case 'file-text': return <FileText className="w-7 h-7 text-secondary" />;
+            default: return <Code className="w-7 h-7 text-primary" />;
+        }
+    };
+
+    const getColors = (index: number) => {
+        const colors = [
+            { bg: "bg-primary/10", text: "text-primary", border: "hover:border-primary/50", button: "group-hover:bg-primary group-hover:text-primary-foreground", check: "text-primary" },
+            { bg: "bg-accent/10", text: "text-accent", border: "hover:border-accent/50", button: "group-hover:bg-accent group-hover:text-accent-foreground", check: "text-accent" },
+            { bg: "bg-secondary/10", text: "text-secondary", border: "hover:border-secondary/50", button: "group-hover:bg-secondary group-hover:text-secondary-foreground", check: "text-secondary" }
+        ];
+        return colors[index % colors.length];
+    };
+
     return (
         <div className="space-y-20 pb-20">
             {/* 1. Hero Section */}
@@ -20,7 +86,7 @@ export function WhatIOfferContent() {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold max-w-4xl mx-auto leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                        I build software, train teams, and help job seekers <span className="gradient-text">upgrade their career.</span>
+                        {content.heroTitle || "I build software, train teams, and help job seekers"} <span className="gradient-text">{content.heroSubtitle || "upgrade their career."}</span>
                     </h1>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
@@ -42,119 +108,58 @@ export function WhatIOfferContent() {
             {/* 2. Service Category Blocks */}
             <section className="container-custom">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Service 1: App Development */}
-                    <div className="glass-strong rounded-3xl p-8 space-y-6 hover:border-primary/50 transition-colors group">
-                        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <Code className="w-7 h-7 text-primary" />
-                        </div>
+                    {services.map((service: any, index: number) => {
+                        const style = getColors(index);
+                        const provides = typeof service.provides === 'string' ? service.provides.split('\n') : (service.provides || []);
+                        const audience = typeof service.audience === 'string' ? service.audience.split('\n') : (service.audience || []);
 
-                        <div className="space-y-2">
-                            <h3 className="text-2xl font-bold">Custom Web & Mobile App Development</h3>
-                            <p className="text-muted-foreground">Build scalable, high-performance applications tailored to your business needs.</p>
-                        </div>
+                        return (
+                            <div key={index} className={`glass-strong rounded-3xl p-8 space-y-6 ${style.border} transition-colors group`}>
+                                <div className={`w-14 h-14 rounded-2xl ${style.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                                    {index === 0 ? <Code className={`w-7 h-7 ${style.text}`} /> :
+                                        index === 1 ? <Users className={`w-7 h-7 ${style.text}`} /> :
+                                            <FileText className={`w-7 h-7 ${style.text}`} />}
+                                </div>
 
-                        <div className="space-y-4 pt-4 border-t border-white/10">
-                            <div>
-                                <h4 className="text-sm font-semibold text-primary mb-2">What you provide:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /> Custom-built web apps</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /> Custom-built mobile apps (Android / iOS)</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /> Ready-made business apps</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /> Full support until deployment</li>
-                                </ul>
+                                <div className="space-y-2">
+                                    <h3 className="text-2xl font-bold">{service.title}</h3>
+                                    <p className="text-muted-foreground">{service.description}</p>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t border-white/10">
+                                    <div>
+                                        <h4 className={`text-sm font-semibold ${style.text} mb-2`}>What you provide:</h4>
+                                        <ul className="space-y-2 text-sm text-muted-foreground">
+                                            {provides.map((item: string, i: number) => (
+                                                <li key={i} className="flex items-start gap-2">
+                                                    <CheckCircle2 className={`w-4 h-4 ${style.check} shrink-0 mt-0.5`} />
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">Who this is for:</h4>
+                                        <ul className="space-y-2 text-sm text-muted-foreground">
+                                            {audience.map((item: string, i: number) => (
+                                                <li key={i} className="flex items-center gap-2">
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${index === 0 ? 'bg-secondary' : index === 1 ? 'bg-primary' : 'bg-accent'}`} />
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <Link href={`/contact?service=${index}`} className="block pt-4">
+                                    <Button className={`w-full ${style.button} transition-colors`}>
+                                        I'm Interested
+                                    </Button>
+                                </Link>
                             </div>
-
-                            <div>
-                                <h4 className="text-sm font-semibold text-secondary mb-2">Who this is for:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Entrepreneurs launching a business</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary" /> SMEs scaling operations</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <Link href="/contact?service=app-dev" className="block pt-4">
-                            <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                Build My App
-                            </Button>
-                        </Link>
-                    </div>
-
-                    {/* Service 2: Interview Training */}
-                    <div className="glass-strong rounded-3xl p-8 space-y-6 hover:border-accent/50 transition-colors group">
-                        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <Users className="w-7 h-7 text-accent" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <h3 className="text-2xl font-bold">Interview Training for Students & Employees</h3>
-                            <p className="text-muted-foreground">Result-oriented coaching to crack technical and HR rounds with confidence.</p>
-                        </div>
-
-                        <div className="space-y-4 pt-4 border-t border-white/10">
-                            <div>
-                                <h4 className="text-sm font-semibold text-accent mb-2">What you provide:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" /> Interview strategy coaching</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" /> Technical + HR practice rounds</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" /> Communication training</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" /> Real-world mock scenarios</li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-semibold text-secondary mb-2">Who this is for:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Freshers & Job Seekers</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Professionals switching careers</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <Link href="/contact?service=training" className="block pt-4">
-                            <Button className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                                Train Me for Interviews
-                            </Button>
-                        </Link>
-                    </div>
-
-                    {/* Service 3: Profile Optimization */}
-                    <div className="glass-strong rounded-3xl p-8 space-y-6 hover:border-secondary/50 transition-colors group">
-                        <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <FileText className="w-7 h-7 text-secondary" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <h3 className="text-2xl font-bold">Resume / Job Portal / LinkedIn Optimization</h3>
-                            <p className="text-muted-foreground">Stand out to recruiters with ATS-friendly resumes and optimized profiles.</p>
-                        </div>
-
-                        <div className="space-y-4 pt-4 border-t border-white/10">
-                            <div>
-                                <h4 className="text-sm font-semibold text-secondary mb-2">What you provide:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" /> ATS-friendly resume writing</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" /> LinkedIn profile optimization</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" /> Job portal complete setup</li>
-                                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" /> Keyword strategy for search</li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h4 className="text-sm font-semibold text-primary mb-2">Who this is for:</h4>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Job Seekers</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Students preparing for placements</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <Link href="/contact?service=profile" className="block pt-4">
-                            <Button className="w-full group-hover:bg-secondary group-hover:text-secondary-foreground transition-colors">
-                                Optimize My Profile
-                            </Button>
-                        </Link>
-                    </div>
+                        );
+                    })}
                 </div>
             </section>
 
@@ -166,14 +171,7 @@ export function WhatIOfferContent() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[
-                        { title: "Hands-on Experience", desc: "Real-world expertise in software development and delivery." },
-                        { title: "500+ Trained", desc: "Helped hundreds of students and employees achieve their career goals." },
-                        { title: "Full Support", desc: "From the first call to final delivery, I'm with you every step." },
-                        { title: "Transparent Pricing", desc: "No hidden costs. Zero outsourcing. You work directly with me." },
-                        { title: "Real Results", desc: "Proven track record of successful apps and hired candidates." },
-                        { title: "Custom Solutions", desc: "Tailored strategies and code, not generic templates." },
-                    ].map((item, i) => (
+                    {whyChooseMe.map((item: any, i: number) => (
                         <div key={i} className="glass p-6 rounded-2xl flex items-start gap-4">
                             <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
                             <div>
@@ -189,30 +187,25 @@ export function WhatIOfferContent() {
             <section className="container-custom py-10">
                 <div className="glass-strong rounded-3xl p-8 md:p-12">
                     <div className="text-center space-y-4 mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold">Proof of Work</h2>
-                        <p className="text-muted-foreground">Don't just take my word for it. See the results.</p>
+                        <h2 className="text-3xl md:text-4xl font-bold">{content.showcaseTitle || "Proof of Work"}</h2>
+                        <p className="text-muted-foreground">{content.showcaseSubtitle || "Don't just take my word for it. See the results."}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Placeholder for App Showcase */}
-                        <div className="space-y-4">
-                            <div className="aspect-video rounded-xl bg-muted/50 border border-white/10 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <span className="text-muted-foreground">App Screenshot Placeholder</span>
+                        {showcaseItems.map((item: any, i: number) => (
+                            <div key={i} className="space-y-4">
+                                <div className="aspect-video rounded-xl bg-muted/50 border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {item.image ? (
+                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-muted-foreground">{item.title} Placeholder</span>
+                                    )}
+                                </div>
+                                <h3 className="text-xl font-bold">{item.title}</h3>
+                                <p className="text-sm text-muted-foreground">{item.description}</p>
                             </div>
-                            <h3 className="text-xl font-bold">Business Apps Delivered</h3>
-                            <p className="text-sm text-muted-foreground">Custom solutions helping businesses scale operations efficiently.</p>
-                        </div>
-
-                        {/* Placeholder for Success Stories */}
-                        <div className="space-y-4">
-                            <div className="aspect-video rounded-xl bg-muted/50 border border-white/10 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <span className="text-muted-foreground">Success Stories Placeholder</span>
-                            </div>
-                            <h3 className="text-xl font-bold">Career Transformations</h3>
-                            <p className="text-sm text-muted-foreground">Students placed in top companies after training and profile optimization.</p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </section>
