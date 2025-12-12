@@ -35,6 +35,8 @@ export function ContactContent({ content }: ContactContentProps) {
 
     const [honeypot, setHoneypot] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [attachmentUrl, setAttachmentUrl] = useState<string>("");
+    const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string>("");
 
     // Import createContactSubmission dynamically or at top level if possible. 
@@ -47,6 +49,62 @@ export function ContactContent({ content }: ContactContentProps) {
     // Actually, I can just replace the top imports and the handleSubmit.
 
     // Let's do it in two steps. First add import.
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset states
+        setUploadError("");
+        setSelectedFile(null);
+        setAttachmentUrl("");
+
+        // Validate file size
+        if (file.size > 10 * 1024 * 1024) {
+            setUploadError("File size must be less than 10MB");
+            e.target.value = "";
+            return;
+        }
+
+        // Validate file type
+        const validTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!validTypes.includes(file.type)) {
+            setUploadError("Only PDF and Word documents are allowed");
+            e.target.value = "";
+            return;
+        }
+
+        setSelectedFile(file);
+        setIsUploading(true);
+
+        try {
+            const fileFormData = new FormData();
+            fileFormData.append('file', file);
+
+            const uploadResponse = await fetch('/api/upload', {
+                method: 'POST',
+                body: fileFormData,
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const uploadData = await uploadResponse.json();
+            setAttachmentUrl(uploadData.url);
+        } catch (error) {
+            console.error('File upload error:', error);
+            setUploadError("File upload failed. Please try again.");
+            setSelectedFile(null); // Clear invalid file
+            if (e.target) e.target.value = "";
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         console.log('handleSubmit called');
@@ -62,37 +120,15 @@ export function ContactContent({ content }: ContactContentProps) {
             return;
         }
 
+        if (isUploading) {
+            alert("Please wait for the file upload to complete.");
+            return;
+        }
+
         setIsSubmitting(true);
-        setUploadError("");
         console.log('Starting form submission', formData);
 
         try {
-            let attachmentPath = "";
-
-            // Try to upload file if selected (but don't fail if upload fails)
-            if (selectedFile) {
-                try {
-                    const fileFormData = new FormData();
-                    fileFormData.append('file', selectedFile);
-
-                    const uploadResponse = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: fileFormData,
-                    });
-
-                    if (uploadResponse.ok) {
-                        const uploadData = await uploadResponse.json();
-                        attachmentPath = uploadData.path;
-                    } else {
-                        console.warn('File upload failed, continuing without attachment');
-                        setUploadError("File upload failed. Message will be sent without attachment.");
-                    }
-                } catch (uploadError) {
-                    console.warn('File upload error, continuing without attachment:', uploadError);
-                    setUploadError("File upload failed. Message will be sent without attachment.");
-                }
-            }
-
             // Submit contact form with or without attachment
             const response = await fetch('/api/contacts', {
                 method: 'POST',
@@ -103,7 +139,7 @@ export function ContactContent({ content }: ContactContentProps) {
                     phone: formData.phone,
                     subject: formData.subject,
                     message: formData.message,
-                    attachment: attachmentPath || undefined,
+                    attachment: attachmentUrl || undefined,
                 }),
             });
 
@@ -117,7 +153,10 @@ export function ContactContent({ content }: ContactContentProps) {
             setSubmitStatus("success");
             setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
             setSelectedFile(null);
-            setUploadError("");
+            setAttachmentUrl("");
+            // Clear file input
+            const fileInput = document.getElementById('attachment') as HTMLInputElement;
+            if (fileInput) fileInput.value = "";
             console.log('Form submitted successfully');
         } catch (error) {
             console.error("Error submitting form:", error);
@@ -249,39 +288,16 @@ export function ContactContent({ content }: ContactContentProps) {
                                                 id="attachment"
                                                 type="file"
                                                 accept=".pdf,.doc,.docx"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        // Validate file size
-                                                        if (file.size > 10 * 1024 * 1024) {
-                                                            setUploadError("File size must be less than 10MB");
-                                                            e.target.value = "";
-                                                            setSelectedFile(null);
-                                                            return;
-                                                        }
-                                                        // Validate file type
-                                                        const validTypes = [
-                                                            'application/pdf',
-                                                            'application/msword',
-                                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                                                        ];
-                                                        if (!validTypes.includes(file.type)) {
-                                                            setUploadError("Only PDF and Word documents are allowed");
-                                                            e.target.value = "";
-                                                            setSelectedFile(null);
-                                                            return;
-                                                        }
-                                                        setUploadError("");
-                                                        setSelectedFile(file);
-                                                    }
-                                                }}
+                                                onChange={handleFileSelect}
                                                 className="hidden"
+                                                disabled={isUploading}
                                             />
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 onClick={() => document.getElementById('attachment')?.click()}
                                                 className="w-full justify-start text-left font-normal"
+                                                disabled={isUploading}
                                             >
                                                 <span className="mr-2">📎</span>
                                                 {selectedFile ? selectedFile.name : 'Choose file'}
@@ -290,25 +306,37 @@ export function ContactContent({ content }: ContactContentProps) {
                                         <p className="text-xs text-muted-foreground">
                                             PDF or Word document (max 10MB)
                                         </p>
-                                        {selectedFile && (
-                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
-                                                <span className="text-sm text-primary font-medium flex-1">
-                                                    📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+
+                                        {/* Upload Progress/Status */}
+                                        {isUploading && (
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 animate-pulse">
+                                                <span className="text-sm text-primary font-medium">
+                                                    Uploading...
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {!isUploading && selectedFile && !uploadError && (
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                                <span className="text-sm text-green-600 font-medium flex-1">
+                                                    ✓ Attached: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                                                 </span>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         setSelectedFile(null);
+                                                        setAttachmentUrl("");
                                                         const input = document.getElementById('attachment') as HTMLInputElement;
                                                         if (input) input.value = "";
                                                     }}
-                                                    className="p-1.5 rounded-full bg-destructive/90 hover:bg-destructive text-destructive-foreground transition-colors"
+                                                    className="p-1.5 rounded-full hover:bg-destructive/10 text-destructive transition-colors"
                                                     title="Remove file"
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         )}
+
                                         {uploadError && (
                                             <p className="text-sm text-destructive">{uploadError}</p>
                                         )}
