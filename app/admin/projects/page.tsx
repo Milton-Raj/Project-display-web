@@ -218,16 +218,16 @@ export default function AdminProjectsPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center gap-2 pt-2">
-                                            <Link href={`/projects/${project.slug}`} target="_blank" className="flex-1">
-                                                <Button size="sm" variant="ghost" className="w-full text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/20">
+                                        <div className="grid grid-cols-2 gap-2 pt-4 mt-auto">
+                                            <Link href={`/projects/${project.slug}`} target="_blank" className="w-full">
+                                                <Button size="sm" variant="ghost" className="w-full justify-center text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/20">
                                                     <Eye className="w-4 h-4 mr-2" />
                                                     View
                                                 </Button>
                                             </Link>
 
-                                            <Link href={`/admin/projects/${project.id}/edit`} className="flex-1">
-                                                <Button size="sm" variant="ghost" className="w-full text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 border border-amber-400/20">
+                                            <Link href={`/admin/projects/${project.id}/edit`} className="w-full">
+                                                <Button size="sm" variant="ghost" className="w-full justify-center text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 border border-amber-400/20">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit
                                                 </Button>
@@ -236,7 +236,7 @@ export default function AdminProjectsPage() {
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className={`flex-1 border ${project.featured
+                                                className={`w-full justify-center border ${project.featured
                                                     ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/50 hover:bg-yellow-400/20'
                                                     : 'text-muted-foreground hover:text-yellow-400 border-white/10 hover:border-yellow-400/50 hover:bg-yellow-400/10'}`}
                                                 onClick={() => toggleFeatured(project)}
@@ -249,7 +249,7 @@ export default function AdminProjectsPage() {
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/20"
+                                                className="w-full justify-center text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/20"
                                                 disabled={isDeleting && projectToDelete === project.id}
                                                 onClick={(e) => {
                                                     e.preventDefault();
