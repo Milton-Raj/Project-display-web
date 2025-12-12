@@ -318,6 +318,14 @@ export async function updateProject(id: string, updates: any) {
 
     if (rowIndex === -1) return null;
 
+    // Map frontend field names to backend expectations
+    const technologies = updates.techStack || updates.technologies || [];
+    const thumbnail = updates.thumbnail || updates.image || '';
+
+    // Ensure we preserve existing values if not provided in updates, 
+    // though usually 'updates' contains the full form data.
+    // For arrays/objects, default to empty/none if explicit update is missing but intended to be cleared.
+
     const updatedRow = [
         id,
         updates.title,
@@ -325,8 +333,8 @@ export async function updateProject(id: string, updates: any) {
         updates.description,
         updates.longDescription || '',
         Array.isArray(updates.category) ? updates.category.join(',') : updates.category,
-        Array.isArray(updates.technologies) ? updates.technologies.join(',') : updates.technologies,
-        updates.image,
+        Array.isArray(technologies) ? technologies.join(',') : technologies,
+        thumbnail, // Use the resolved thumbnail
         updates.demoUrl || '',
         updates.githubUrl || '',
         updates.featured ? 'TRUE' : 'FALSE',
@@ -343,6 +351,11 @@ export async function updateProject(id: string, updates: any) {
         updates.demoType || 'none',
         updates.status || 'live',
     ];
+
+    console.log(`Updating project ${id} with:`, {
+        demoType: updates.demoType,
+        docCount: updates.documents?.length
+    });
 
     await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
