@@ -44,23 +44,25 @@ export default function NewProjectPage() {
     const [uploadStatus, setUploadStatus] = useState<{
         thumbnail: boolean;
         screenshots: boolean;
-        documents: boolean;
+        docFile: boolean;
+        docPreview: boolean;
     }>({
         thumbnail: false,
         screenshots: false,
-        documents: false
+        docFile: false,
+        docPreview: false
     });
 
-    // File states
+    const [loadingMessage, setLoadingMessage] = useState("");
+
+    // File states - simplified, we mostly just need the URLs now
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-    const [docFile, setDocFile] = useState<File | null>(null);
-    const [previewFile, setPreviewFile] = useState<File | null>(null);
-    const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+    // Removed docFile/previewFile states as we upload immediately now
     const [isUploading, setUploading] = useState(false);
     const [mobileDemoType, setMobileDemoType] = useState<'ios' | 'android' | 'apk' | 'testflight' | 'none'>('none');
 
 
-    // Document state
+    // Document state - stored URLs directly
     const [newDoc, setNewDoc] = useState({ name: "", url: "", previewUrl: "" });
 
     const uploadFile = async (file: File) => {
@@ -100,7 +102,7 @@ export default function NewProjectPage() {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        setUploading(true);
+        setUploadStatus(prev => ({ ...prev, screenshots: true }));
         try {
             const uploadPromises = files.map(file => uploadFile(file));
             const urls = await Promise.all(uploadPromises);
@@ -113,92 +115,72 @@ export default function NewProjectPage() {
             console.error('Error uploading screenshots:', error);
             alert('Failed to upload screenshots.');
         } finally {
-            setUploading(false);
+            setUploadStatus(prev => ({ ...prev, screenshots: false }));
         }
     };
 
-    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleDocFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setUploading(true);
+        setNewDoc(prev => ({ ...prev, url: "" })); // Clear previous URL
+        setUploadStatus(prev => ({ ...prev, docFile: true }));
+
         try {
             const url = await uploadFile(file);
-            setFormData(prev => ({
-                ...prev,
-                documents: [...(prev.documents || []), { name: file.name, url }]
-            }));
+            setNewDoc(prev => ({ ...prev, url }));
         } catch (error) {
             console.error('Error uploading document:', error);
-            alert('Failed to upload document.');
+            alert('Failed to upload document file.');
+            e.target.value = ""; // Reset input
         } finally {
-            setUploading(false);
+            setUploadStatus(prev => ({ ...prev, docFile: false }));
         }
     };
 
-    const handleDocFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setDocFile(e.target.files[0]);
+    const handlePreviewFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setNewDoc(prev => ({ ...prev, previewUrl: "" })); // Clear previous
+        setUploadStatus(prev => ({ ...prev, docPreview: true }));
+
+        try {
+            const url = await uploadFile(file);
+            setNewDoc(prev => ({ ...prev, previewUrl: url }));
+        } catch (error) {
+            console.error('Error uploading preview:', error);
+            alert('Failed to upload preview image.');
+            e.target.value = ""; // Reset input
+        } finally {
+            setUploadStatus(prev => ({ ...prev, docPreview: false }));
         }
     };
 
-    const handlePreviewFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setPreviewFile(file);
-            // Show immediate preview for doc preview
-            setNewDoc({ ...newDoc, previewUrl: URL.createObjectURL(file) });
-        }
-    };
-
-    // uploadFile function moved up
-
-    const addDocument = async () => {
+    const addDocument = () => {
         if (!newDoc.name) {
             alert("Please enter a document name");
             return;
         }
 
-        if (!docFile && !newDoc.url) {
+        if (!newDoc.url) {
             alert("Please upload a document file or enter a URL");
             return;
         }
 
-        setIsUploadingDoc(true);
-        try {
-            let docUrl = newDoc.url;
-            let previewUrl = newDoc.previewUrl;
+        setFormData({
+            ...formData,
+            documents: [...formData.documents, newDoc],
+        });
 
-            // Upload files if selected
-            if (docFile) {
-                docUrl = await uploadFile(docFile);
-            }
-            if (previewFile) {
-                previewUrl = await uploadFile(previewFile);
-            }
+        // Reset form
+        setNewDoc({ name: "", url: "", previewUrl: "" });
 
-            setFormData({
-                ...formData,
-                documents: [...formData.documents, { name: newDoc.name, url: docUrl, previewUrl }],
-            });
-
-            // Reset form
-            setNewDoc({ name: "", url: "", previewUrl: "" });
-            setDocFile(null);
-            setPreviewFile(null);
-
-            // Reset file inputs
-            const docInput = document.getElementById('doc-upload') as HTMLInputElement;
-            const previewInput = document.getElementById('preview-upload') as HTMLInputElement;
-            if (docInput) docInput.value = '';
-            if (previewInput) previewInput.value = '';
-
-        } catch (error) {
-            console.error("Error uploading document:", error);
-            alert("Failed to upload document");
-        } finally {
-            setIsUploadingDoc(false);
-        }
+        // Reset file inputs manually
+        const docInput = document.getElementById('doc-upload') as HTMLInputElement;
+        const previewInput = document.getElementById('preview-upload') as HTMLInputElement;
+        if (docInput) docInput.value = '';
+        if (previewInput) previewInput.value = '';
     };
 
     const removeDocument = (index: number) => {
@@ -210,27 +192,28 @@ export default function NewProjectPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (uploadStatus.thumbnail || uploadStatus.screenshots || uploadStatus.docFile || uploadStatus.docPreview) {
+            alert("Please wait for all uploads to finish before saving.");
+            return;
+        }
+
         setIsLoading(true);
+        setLoadingMessage("Preparing data...");
 
         // Safety timeout to prevent infinite loading
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
         try {
-            let thumbnailUrl = formData.thumbnail;
-
-            // Upload thumbnail if selected
-            if (thumbnailFile) {
-                thumbnailUrl = await uploadFile(thumbnailFile);
-            }
-
             const slug = slugify(formData.title);
+
+            setLoadingMessage("Saving project...");
             const response = await fetch('/api/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    thumbnail: thumbnailUrl,
                     slug,
                 }),
                 signal: controller.signal
@@ -259,6 +242,7 @@ export default function NewProjectPage() {
             alert(message);
         } finally {
             setIsLoading(false);
+            setLoadingMessage("");
         }
     };
 
@@ -695,12 +679,12 @@ export default function NewProjectPage() {
                                             <p className="font-medium">{doc.name}</p>
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                 <FileText className="w-3 h-3" />
-                                                <span className="truncate max-w-[200px]">{doc.url}</span>
+                                                <span className="truncate max-w-[200px]">Uploaded</span>
                                             </div>
                                             {doc.previewUrl && (
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                     <ImageIcon className="w-3 h-3" />
-                                                    <span className="truncate max-w-[200px]">Preview: {doc.previewUrl}</span>
+                                                    <span className="truncate max-w-[200px]">Preview Available</span>
                                                 </div>
                                             )}
                                         </div>
@@ -732,8 +716,21 @@ export default function NewProjectPage() {
                                                 id="doc-upload"
                                                 type="file"
                                                 onChange={handleDocFileChange}
+                                                disabled={uploadStatus.docFile}
                                                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                             />
+                                            {uploadStatus.docFile && (
+                                                <div className="flex items-center text-sm text-primary animate-pulse">
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Uploading Document...
+                                                </div>
+                                            )}
+                                            {!uploadStatus.docFile && newDoc.url && (
+                                                <div className="flex items-center text-sm text-green-500">
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                                                    File Uploaded
+                                                </div>
+                                            )}
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.url}
@@ -749,8 +746,24 @@ export default function NewProjectPage() {
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handlePreviewFileChange}
+                                                disabled={uploadStatus.docPreview}
                                                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                             />
+                                            {uploadStatus.docPreview && (
+                                                <div className="flex items-center text-sm text-primary animate-pulse">
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Uploading Preview...
+                                                </div>
+                                            )}
+                                            {!uploadStatus.docPreview && newDoc.previewUrl && (
+                                                <div className="flex items-center text-sm text-green-500">
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                                                    Preview Uploaded
+                                                    {newDoc.previewUrl.startsWith('http') && (
+                                                        <img src={newDoc.previewUrl} alt="Preview" className="h-8 w-8 ml-2 rounded object-cover" />
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="text-center text-xs text-muted-foreground">- OR -</div>
                                             <Input
                                                 value={newDoc.previewUrl}
@@ -765,19 +778,10 @@ export default function NewProjectPage() {
                                         onClick={addDocument}
                                         variant="secondary"
                                         className="w-full"
-                                        disabled={isUploadingDoc}
+                                        disabled={uploadStatus.docFile || uploadStatus.docPreview}
                                     >
-                                        {isUploadingDoc ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                Uploading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Upload className="w-4 h-4 mr-2" />
-                                                Add Document
-                                            </>
-                                        )}
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Add Document
                                     </Button>
                                 </div>
                             </div>
@@ -795,7 +799,7 @@ export default function NewProjectPage() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Creating...
+                                    {loadingMessage || "Creating..."}
                                 </>
                             ) : (
                                 <>
