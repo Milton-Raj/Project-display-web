@@ -2,10 +2,28 @@ import { NextResponse } from 'next/server';
 import { createProject, getAllProjects, getProjectBySlug, updateProject, deleteProject } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (id) {
+            // Fetch single project by ID for edit page
+            const projects = await getAllProjects();
+            const project = projects.find(p => p.id === id);
+
+            if (!project) {
+                return NextResponse.json(
+                    { error: 'Project not found' },
+                    { status: 404 }
+                );
+            }
+
+            return NextResponse.json({ project });
+        }
+
+        // Fetch all projects
         const projects = await getAllProjects();
-        // CRITICAL FIX: Admin expects { projects: [...] } format
         return NextResponse.json({ projects });
     } catch (error: any) {
         console.error('Error fetching projects:', error);
