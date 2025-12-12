@@ -148,7 +148,7 @@ export async function createProject(project: any) {
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A:L',
+        range: 'Projects!A:V',
         valueInputOption: 'USER_ENTERED',
         requestBody: {
             values: [[
@@ -164,6 +164,17 @@ export async function createProject(project: any) {
                 project.githubUrl || '',
                 project.featured ? 'TRUE' : 'FALSE',
                 createdAt,
+                // New Fields
+                Array.isArray(project.features) ? project.features.join('|') : '',
+                Array.isArray(project.screenshots) ? project.screenshots.join(',') : '',
+                JSON.stringify(project.documents || []),
+                project.videoUrl || '',
+                project.appStoreUrl || '',
+                project.playStoreUrl || '',
+                project.apkUrl || '',
+                project.testFlightUrl || '',
+                project.demoType || 'none',
+                project.status || 'live',
             ]],
         },
     });
@@ -176,7 +187,7 @@ export async function getAllProjects() {
 
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A2:L',
+        range: 'Projects!A2:V',
     });
 
     const rows = response.data.values || [];
@@ -191,28 +202,31 @@ export async function getAllProjects() {
             longDescription: row[4] || '',
             category: row[5]?.includes(',') ? row[5].split(',') : (row[5] || ''),
             technologies,
-            techStack: technologies, // Alias for technologies
+            techStack: technologies,
             image: row[7] || '',
-            thumbnail: row[7] || '', // Use same as image
+            thumbnail: row[7] || '',
             demoUrl: row[8] || '',
             githubUrl: row[9] || '',
             featured: row[10] === 'TRUE',
             createdAt: row[11] || '',
-            updatedAt: row[11] || '', // Use createdAt as updatedAt for now
+            updatedAt: row[11] || '',
+
+            // New Fields Parsing
+            features: row[12] ? row[12].split('|') : [],
+            screenshots: row[13] ? row[13].split(',') : [],
+            documents: row[14] ? JSON.parse(row[14]) : [],
+            videoUrl: row[15] || '',
+            appStoreUrl: row[16] || '',
+            playStoreUrl: row[17] || '',
+            apkUrl: row[18] || '',
+            testFlightUrl: row[19] || '',
+            demoType: row[20] || 'none',
+            status: row[21] || 'live',
+
             views: 0,
-            videoUrl: '',
-            appStoreUrl: '',
-            playStoreUrl: '',
-            apkUrl: '',
-            testFlightUrl: '',
             challenges: [] as string[],
             solutions: [] as string[],
             results: [] as string[],
-            features: [] as string[],
-            documents: [] as Array<{ name: string; url: string; previewUrl?: string }>,
-            screenshots: [] as string[],
-            status: 'completed' as 'live' | 'coming-soon' | 'archived' | 'completed',
-            demoType: 'none' as Project['demoType'],
         };
     });
 }
@@ -258,11 +272,22 @@ export async function updateProject(id: string, updates: any) {
         updates.githubUrl || '',
         updates.featured ? 'TRUE' : 'FALSE',
         updates.createdAt || new Date().toISOString(),
+        // New Fields
+        Array.isArray(updates.features) ? updates.features.join('|') : '',
+        Array.isArray(updates.screenshots) ? updates.screenshots.join(',') : '',
+        JSON.stringify(updates.documents || []),
+        updates.videoUrl || '',
+        updates.appStoreUrl || '',
+        updates.playStoreUrl || '',
+        updates.apkUrl || '',
+        updates.testFlightUrl || '',
+        updates.demoType || 'none',
+        updates.status || 'live',
     ];
 
     await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `Projects!A${rowIndex + 1}:L${rowIndex + 1}`,
+        range: `Projects!A${rowIndex + 1}:V${rowIndex + 1}`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
             values: [updatedRow],
