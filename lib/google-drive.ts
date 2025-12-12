@@ -54,8 +54,9 @@ export async function uploadToDrive(
         },
     });
 
-    // Get direct download link
-    const directLink = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    // Use thumbnail endpoint for images (more reliable for display)
+    // For images, use the thumbnail endpoint which works better in img tags
+    const directLink = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
 
     return {
         id: fileId,
