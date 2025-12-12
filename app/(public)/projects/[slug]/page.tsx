@@ -14,6 +14,9 @@ interface ProjectPageProps {
     }>;
 }
 
+export const revalidate = 60;
+export const dynamicParams = true;
+
 export default async function ProjectPage({ params }: ProjectPageProps) {
     const { slug } = await params;
     const project = await getProjectBySlug(slug);
