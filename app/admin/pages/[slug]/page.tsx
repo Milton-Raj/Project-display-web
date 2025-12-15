@@ -35,7 +35,8 @@ export default function PageEditor() {
                 const data = await response.json();
 
                 if (data.content) {
-                    setFormData(data.content);
+                    // Fix: Unwrap content if it's nested (which it is for 'About' page API response)
+                    setFormData(data.content.content || data.content);
                 } else {
                     // Default initial state based on slug
                     if (slug === 'home') {

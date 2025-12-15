@@ -5,7 +5,8 @@ export const revalidate = 60; // Cache for 60 seconds
 
 export default async function AboutPage() {
     const content = await getPageContent('about');
-    const data = content || {};
+    // Fix: Unwrap content if it's nested (API returns { slug, content: {...}, updatedAt })
+    const data = content?.content || content || {};
 
     return <AboutContent content={data} />;
 }
