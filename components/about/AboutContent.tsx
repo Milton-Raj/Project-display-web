@@ -54,7 +54,7 @@ export function AboutContent({ content }: AboutContentProps) {
     const certificationsList = content.certifications || defaultCertifications;
 
     return (
-        <div className="container-custom py-20 space-y-20">
+        <div className="container-custom py-10 space-y-20">
             {/* Hero Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <motion.div
