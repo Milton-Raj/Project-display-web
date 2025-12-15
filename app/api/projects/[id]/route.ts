@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { deleteProject, updateProject, getProjectById } from '@/lib/database';
 
 export const dynamic = 'force-dynamic';
@@ -47,6 +48,12 @@ export async function DELETE(
         if (!success) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
+
+        // Revalidate all paths where projects appear
+        revalidatePath('/projects');
+        revalidatePath('/admin/projects');
+        revalidatePath('/admin/dashboard');
+        revalidatePath('/'); // For featured projects on home
 
         return NextResponse.json({ success: true });
     } catch (error) {
