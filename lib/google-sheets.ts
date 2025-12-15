@@ -79,7 +79,9 @@ export async function getAllContacts() {
         attachment: row[6] || '',
         status: (row[7] || 'new') as 'new' | 'read' | 'replied',
         createdAt: row[8] || '',
-    }));
+    })).sort((a: any, b: any) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 }
 
 export async function updateContactStatus(id: string, status: string) {
@@ -283,7 +285,10 @@ export async function getAllProjects() {
         });
 
         console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
-        return projects;
+        console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
+        return projects.sort((a: any, b: any) => {
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
     } catch (error) {
         console.error('Error in getAllProjects:', error);
         throw error;

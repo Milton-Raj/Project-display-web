@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code, Users, FileText, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, Code, Users, FileText, CheckCircle2, Sparkles, Smartphone, Cloud, Briefcase, Database, Layout } from "lucide-react";
 import Link from "next/link";
 
 interface WhatIOfferContentProps {
@@ -8,29 +8,7 @@ interface WhatIOfferContentProps {
 
 export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
     // Default Fallbacks consistent with original hardcoded values
-    const services = content.services || [
-        {
-            title: "Custom Web & Mobile App Development",
-            description: "Build scalable, high-performance applications tailored to your business needs.",
-            provides: "Custom-built web apps\nCustom-built mobile apps (Android / iOS)\nReady-made business apps\nFull support until deployment",
-            audience: "Entrepreneurs launching a business\nSMEs scaling operations",
-            icon: "code"
-        },
-        {
-            title: "Interview Training for Students & Employees",
-            description: "Result-oriented coaching to crack technical and HR rounds with confidence.",
-            provides: "Interview strategy coaching\nTechnical + HR practice rounds\nCommunication training\nReal-world mock scenarios",
-            audience: "Freshers & Job Seekers\nProfessionals switching careers",
-            icon: "users"
-        },
-        {
-            title: "Resume / Job Portal / LinkedIn Optimization",
-            description: "Stand out to recruiters with ATS-friendly resumes and optimized profiles.",
-            provides: "ATS-friendly resume writing\nLinkedIn profile optimization\nJob portal complete setup\nKeyword strategy for search",
-            audience: "Job Seekers\nStudents preparing for placements",
-            icon: "file-text"
-        }
-    ];
+    const services = content.services || [];
 
     const whyChooseMe = content.whyChooseMe || [
         { title: "Hands-on Experience", desc: "Real-world expertise in software development and delivery." },
@@ -52,12 +30,33 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
         }
     ];
 
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'users': return <Users className="w-7 h-7 text-accent" />;
-            case 'file-text': return <FileText className="w-7 h-7 text-secondary" />;
-            default: return <Code className="w-7 h-7 text-primary" />;
+    const getDynamicIcon = (title: string, style: any) => {
+        const lowerTitle = title.toLowerCase();
+        const iconClass = `w-7 h-7 ${style.text}`;
+
+        if (lowerTitle.includes('mobile') || lowerTitle.includes('android') || lowerTitle.includes('ios') || lowerTitle.includes('app')) {
+            return <Smartphone className={iconClass} />;
         }
+        if (lowerTitle.includes('cloud') || lowerTitle.includes('aws') || lowerTitle.includes('azure')) {
+            return <Cloud className={iconClass} />;
+        }
+        if (lowerTitle.includes('data') || lowerTitle.includes('sql') || lowerTitle.includes('backend')) {
+            return <Database className={iconClass} />;
+        }
+        if (lowerTitle.includes('interview') || lowerTitle.includes('training') || lowerTitle.includes('coaching') || lowerTitle.includes('career') || lowerTitle.includes('team')) {
+            return <Users className={iconClass} />;
+        }
+        if (lowerTitle.includes('resume') || lowerTitle.includes('linkedin') || lowerTitle.includes('profile')) {
+            return <FileText className={iconClass} />;
+        }
+        if (lowerTitle.includes('product') || lowerTitle.includes('management') || lowerTitle.includes('business')) {
+            return <Briefcase className={iconClass} />;
+        }
+        if (lowerTitle.includes('web') || lowerTitle.includes('frontend') || lowerTitle.includes('react')) {
+            return <Layout className={iconClass} />;
+        }
+
+        return <Code className={iconClass} />;
     };
 
     const getColors = (index: number) => {
@@ -116,9 +115,7 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
                         return (
                             <div key={index} className={`glass-strong rounded-3xl p-8 space-y-6 ${style.border} transition-colors group`}>
                                 <div className={`w-14 h-14 rounded-2xl ${style.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                                    {index === 0 ? <Code className={`w-7 h-7 ${style.text}`} /> :
-                                        index === 1 ? <Users className={`w-7 h-7 ${style.text}`} /> :
-                                            <FileText className={`w-7 h-7 ${style.text}`} />}
+                                    {getDynamicIcon(service.title || '', style)}
                                 </div>
 
                                 <div className="space-y-2">
