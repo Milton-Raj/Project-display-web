@@ -647,6 +647,9 @@ export async function processPageUpdate(slug: string, content: any) {
     if (normalizedSlug === 'about') {
         throw new Error("DEBUG TRAP: OLD LOGIC REACHED. The server IS running the new code, but the logic fell through.");
     }
+    if (normalizedSlug === 'what-i-offer') {
+        throw new Error("DEBUG TRAP: OLD LOGIC REACHED for WhatIOffer. The server IS running the new code.");
+    }
 
     if (rowIndex === -1) {
         await sheets.spreadsheets.values.append({
