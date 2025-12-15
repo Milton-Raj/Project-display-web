@@ -456,6 +456,9 @@ export async function getPageContent(slug: string) {
     if (slug.toLowerCase() === 'about') {
         return getAboutPage();
     }
+    if (slug.toLowerCase() === 'what-i-offer') {
+        return getWhatIOfferPage();
+    }
 
     const sheets = await getGoogleSheets();
 
@@ -526,6 +529,45 @@ async function getAboutPage() {
     }
 }
 
+async function getWhatIOfferPage() {
+    const sheets = await getGoogleSheets();
+    try {
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'WhatIOffer!A2:K2',
+        });
+
+        const row = response.data.values?.[0];
+
+        if (!row) {
+            return getDefaultPageContent('what-i-offer');
+        }
+
+        const content = {
+            slug: 'what-i-offer',
+            heroTitle: row[1] || '',
+            heroSubtitle: row[2] || '',
+            services: row[3] ? JSON.parse(row[3]) : [],
+            whyChooseMe: row[4] ? JSON.parse(row[4]) : [],
+            showcaseTitle: row[5] || '',
+            showcaseSubtitle: row[6] || '',
+            showcaseItems: row[7] ? JSON.parse(row[7]) : [],
+            ctaTitle: row[8] || '',
+            ctaDescription: row[9] || '',
+            updatedAt: row[10] || new Date().toISOString(),
+        };
+
+        return {
+            slug: 'what-i-offer',
+            content: content,
+            updatedAt: content.updatedAt,
+        };
+    } catch (error) {
+        console.warn('Error getting WhatIOffer page (might not exist yet):', error);
+        return getDefaultPageContent('what-i-offer');
+    }
+}
+
 function getDefaultPageContent(slug: string) {
     const defaults: Record<string, any> = {
         home: {
@@ -583,6 +625,10 @@ export async function processPageUpdate(slug: string, content: any) {
     if (normalizedSlug === 'about') {
         console.log("Routing to About Page logic (Primary Check)");
         return updateAboutPage(content);
+    }
+    if (normalizedSlug === 'what-i-offer') {
+        console.log("Routing to What I Offer Page logic");
+        return updateWhatIOfferPage(content);
     }
 
     const sheets = await getGoogleSheets();
@@ -715,6 +761,82 @@ async function ensureAboutSheetExists(sheets: any) {
     } catch (error) {
         console.error('Error ensuring About sheet exists:', error);
         // Don't throw, try to proceed in case it's a permission issue or race condition
+    }
+}
+
+async function updateWhatIOfferPage(content: any) {
+    const sheets = await getGoogleSheets();
+    const updatedAt = new Date().toISOString();
+
+    await ensureWhatIOfferSheetExists(sheets);
+
+    // Update headers
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'WhatIOffer!A1:K1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values: [[
+                'slug', 'heroTitle', 'heroSubtitle', 'services', 'whyChooseMe',
+                'showcaseTitle', 'showcaseSubtitle', 'showcaseItems', 'ctaTitle', 'ctaDescription', 'updatedAt'
+            ]]
+        }
+    });
+
+    const rowData = [
+        'what-i-offer',
+        content.heroTitle || '',
+        content.heroSubtitle || '',
+        JSON.stringify(content.services || []),
+        JSON.stringify(content.whyChooseMe || []),
+        content.showcaseTitle || '',
+        content.showcaseSubtitle || '',
+        JSON.stringify(content.showcaseItems || []),
+        content.ctaTitle || '',
+        content.ctaDescription || '',
+        updatedAt
+    ];
+
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'WhatIOffer!A2:K2',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values: [rowData],
+        },
+    });
+
+    return { slug: 'what-i-offer', content, updatedAt };
+}
+
+async function ensureWhatIOfferSheetExists(sheets: any) {
+    try {
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId: SPREADSHEET_ID,
+        });
+
+        const sheetExists = spreadsheet.data.sheets?.some(
+            (s: any) => s.properties?.title === 'WhatIOffer'
+        );
+
+        if (!sheetExists) {
+            console.log("Creating 'WhatIOffer' sheet...");
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: SPREADSHEET_ID,
+                requestBody: {
+                    requests: [{
+                        addSheet: {
+                            properties: {
+                                title: 'WhatIOffer',
+                                gridProperties: { frozenRowCount: 1 }
+                            }
+                        }
+                    }]
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error ensuring WhatIOffer sheet exists:', error);
     }
 }
 
