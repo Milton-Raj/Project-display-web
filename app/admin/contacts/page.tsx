@@ -285,9 +285,9 @@ export default function AdminContactsPage() {
                         {filteredContacts.map((contact) => (
                             <div
                                 key={contact.id}
-                                className={`group relative flex items-center gap-4 p-4 rounded-xl border transition-smooth cursor-pointer ${contact.status === 'unread'
-                                    ? 'bg-primary/5 border-l-4 border-l-primary border-primary/30 hover:bg-primary/10 hover-glow-primary'
-                                    : 'bg-card border-l-4 border-l-transparent hover:bg-accent/5 hover-glow-secondary'
+                                className={`group relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${contact.status === 'unread'
+                                        ? 'bg-primary/10 border-l-4 border-l-primary border-primary/20 shadow-sm hover:bg-primary/15'
+                                        : 'bg-card/50 border-l-4 border-l-transparent hover:bg-accent/5 opacity-80 hover:opacity-100'
                                     }`}
                                 onClick={() => handleContactClick(contact)}
                             >

@@ -77,7 +77,7 @@ export async function getAllContacts() {
         subject: row[4] || '',
         message: row[5] || '',
         attachment: row[6] || '',
-        status: (row[7] || 'new') as 'new' | 'read' | 'replied',
+        status: (row[7] === 'read' ? 'read' : 'unread') as 'unread' | 'read' | 'replied',
         createdAt: row[8] || '',
     })).sort((a: any, b: any) => {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -1189,7 +1189,7 @@ export async function getStats() {
         getAllProjects(),
     ]);
 
-    const newContacts = contacts.filter(c => c.status === 'new').length;
+    const newContacts = contacts.filter(c => c.status === 'unread').length;
     const totalProjects = projects.length;
     const featuredProjects = projects.filter(p => p.featured).length;
 
