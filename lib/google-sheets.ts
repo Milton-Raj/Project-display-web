@@ -453,6 +453,10 @@ export async function deleteProject(id: string) {
 // ==================== PAGES ====================
 
 export async function getPageContent(slug: string) {
+    if (slug.toLowerCase() === 'about') {
+        return getAboutPage();
+    }
+
     const sheets = await getGoogleSheets();
 
     try {
@@ -479,6 +483,49 @@ export async function getPageContent(slug: string) {
     }
 }
 
+async function getAboutPage() {
+    const sheets = await getGoogleSheets();
+    try {
+        // Try to get data from the "About" sheet
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'About!A2:L2', // Read specific columns
+        });
+
+        const row = response.data.values?.[0];
+
+        if (!row) {
+            return getDefaultPageContent('about');
+        }
+
+        // Map columns to content object
+        const content = {
+            slug: 'about',
+            heroBadge: row[1] || '',
+            heroTitle: row[2] || '',
+            heroSubtitle1: row[3] || '',
+            profileImage: row[4] || '',
+            experienceYears: row[5] || '',
+            skillsTitle: row[6] || '',
+            skillsSubtitle: row[7] || '',
+            skills: row[8] ? JSON.parse(row[8]) : [],
+            certificationsTitle: row[9] || '',
+            certifications: row[10] ? row[10].split(',').map((s: string) => s.trim()) : [],
+            updatedAt: row[11] || new Date().toISOString(),
+        };
+
+        return {
+            slug: 'about',
+            content: content,
+            updatedAt: content.updatedAt,
+        };
+    } catch (error) {
+        console.warn('Error getting About page from dedicated sheet (might not exist yet):', error);
+        // Fallback to legacy Pages sheet if About sheet fails
+        return getDefaultPageContent('about');
+    }
+}
+
 function getDefaultPageContent(slug: string) {
     const defaults: Record<string, any> = {
         home: {
@@ -495,14 +542,18 @@ function getDefaultPageContent(slug: string) {
                 { label: "Happy Clients", value: "30+" }
             ],
             ctaTitle: "Ready to Build Something Amazing?",
-            ctaDescription: "Let's collaborate and turn your vision into reality. Get in touch to discuss your next project."
+            ctaDescription: "Let's collaborate and turn your vision to reality. Get in touch to discuss your next project."
         },
         about: {
-            heroTitle: "About Me",
-            heroSubtitle: "Passionate developer",
+            heroBadge: "Full-Stack Developer",
+            heroTitle: "Hi, I'm Milton Raj",
+            heroSubtitle1: "Building scalable apps for web & mobile",
             profileImage: "",
             experienceYears: "11+",
+            skillsTitle: "My Expertise",
+            skillsSubtitle: "Specialized skills and technologies I use to build exceptional digital products",
             skills: [],
+            certificationsTitle: "Certifications & Achievements",
             certifications: []
         },
         "what-i-offer": {
@@ -526,7 +577,14 @@ function getDefaultPageContent(slug: string) {
     };
 }
 
-export async function updatePageContent(slug: string, content: any) {
+export async function processPageUpdate(slug: string, content: any) {
+    const normalizedSlug = slug.toString().trim().toLowerCase();
+
+    if (normalizedSlug === 'about') {
+        console.log("Routing to About Page logic (Primary Check)");
+        return updateAboutPage(content);
+    }
+
     const sheets = await getGoogleSheets();
 
     const response = await sheets.spreadsheets.values.get({
@@ -537,6 +595,12 @@ export async function updatePageContent(slug: string, content: any) {
     const rows = response.data.values || [];
     const rowIndex = rows.findIndex((row: any[]) => row[0] === slug);
     const updatedAt = new Date().toISOString();
+
+    // SAFETY FALLBACK: If we somehow found the 'about' row in the old sheet, redirect!
+    // This catches cases where slug might be "about" but the top check failed for some reason
+    if (normalizedSlug === 'about') {
+        throw new Error("DEBUG TRAP: OLD LOGIC REACHED. The server IS running the new code, but the logic fell through.");
+    }
 
     if (rowIndex === -1) {
         await sheets.spreadsheets.values.append({
@@ -559,6 +623,99 @@ export async function updatePageContent(slug: string, content: any) {
     }
 
     return { slug, content, updatedAt };
+}
+
+async function updateAboutPage(content: any) {
+    const sheets = await getGoogleSheets();
+    const updatedAt = new Date().toISOString();
+
+    // Ensure "About" sheet exists
+    await ensureAboutSheetExists(sheets);
+
+    // Update headers (idempotent-ish)
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'About!A1:L1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values: [[
+                'slug',
+                'heroBadge',
+                'heroTitle',
+                'heroSubtitle1',
+                'profileImage',
+                'experienceYears',
+                'skillsTitle',
+                'skillsSubtitle',
+                'skills',
+                'certificationsTitle',
+                'certifications',
+                'updatedAt'
+            ]]
+        }
+    });
+
+    // Prepare row data strictly mapping to headers
+    const rowData = [
+        'about', // A: slug
+        content.heroBadge || '', // B
+        content.heroTitle || '', // C
+        content.heroSubtitle1 || '', // D
+        content.profileImage || '', // E
+        content.experienceYears || '', // F
+        content.skillsTitle || '', // G
+        content.skillsSubtitle || '', // H
+        JSON.stringify(content.skills || []), // I: stored as JSON array
+        content.certificationsTitle || '', // J
+        Array.isArray(content.certifications) ? content.certifications.join(',') : (content.certifications || ''), // K: CSV
+        updatedAt // L
+    ];
+
+    // Always update Row 2 (single row for 'About' page)
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'About!A2:L2',
+        valueInputOption: 'USER_ENTERED', // Allow formula parsing if needed, but mainly for type coercion
+        requestBody: {
+            values: [rowData],
+        },
+    });
+
+    return { slug: 'about', content, updatedAt };
+}
+
+async function ensureAboutSheetExists(sheets: any) {
+    try {
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId: SPREADSHEET_ID,
+        });
+
+        const sheetExists = spreadsheet.data.sheets?.some(
+            (s: any) => s.properties?.title === 'About'
+        );
+
+        if (!sheetExists) {
+            console.log("Creating 'About' sheet...");
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: SPREADSHEET_ID,
+                requestBody: {
+                    requests: [{
+                        addSheet: {
+                            properties: {
+                                title: 'About',
+                                gridProperties: {
+                                    frozenRowCount: 1,
+                                }
+                            }
+                        }
+                    }]
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error ensuring About sheet exists:', error);
+        // Don't throw, try to proceed in case it's a permission issue or race condition
+    }
 }
 
 // ==================== SETTINGS ====================

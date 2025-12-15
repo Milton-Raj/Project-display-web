@@ -17,7 +17,8 @@ export {
 
     // Pages
     getPageContent,
-    updatePageContent,
+    processPageUpdate as updatePageContent,
+    processPageUpdate,
 
     // Settings
     getSetting,

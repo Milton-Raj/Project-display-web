@@ -27,16 +27,21 @@ export async function POST(request: Request) {
             attachment: attachment || undefined,
         });
 
-        // Send email notification (fire and forget)
+        // Send email notification (await to prevent serverless termination)
         const { sendContactEmail } = await import('@/lib/mail');
-        sendContactEmail({
-            name,
-            email,
-            phone: phone || '',
-            subject,
-            message,
-            attachment: attachment || undefined
-        }).catch(console.error);
+        try {
+            await sendContactEmail({
+                name,
+                email,
+                phone: phone || '',
+                subject,
+                message,
+                attachment: attachment || undefined
+            });
+        } catch (emailError) {
+            // Log but don't fail the request since data was saved
+            console.error('Failed to send email notification:', emailError);
+        }
 
         return NextResponse.json({ contact }, { status: 201 });
     } catch (error) {

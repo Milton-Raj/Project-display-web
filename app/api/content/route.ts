@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { updatePageContent, getPageContent } from '@/lib/database';
+import { processPageUpdate, getPageContent } from '@/lib/database';
+import { revalidatePath } from 'next/cache';
 
 // Enable static rendering and caching for faster responses
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 export const revalidate = 10; // Revalidate every 10 seconds
 
 export async function GET(request: Request) {
@@ -25,12 +26,21 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { slug, content } = body;
+        console.log('Received update request:', { slug, contentKeys: Object.keys(content || {}) });
 
         if (!slug || !content) {
             return NextResponse.json({ error: 'Slug and content are required' }, { status: 400 });
         }
 
-        await updatePageContent(slug, content);
+        await processPageUpdate(slug, content);
+        if (slug === 'about') {
+            revalidatePath('/about');
+            revalidatePath('/'); // In case about content is used on home
+        } else {
+            revalidatePath(`/${slug}`);
+        }
+        revalidatePath('/(public)', 'layout'); // Invalidate public layout just in case
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error updating content:", error);
