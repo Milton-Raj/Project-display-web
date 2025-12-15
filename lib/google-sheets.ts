@@ -852,10 +852,10 @@ async function ensureHomeSheetExists(sheets: any) {
         // Initialize Header Row
         await sheets.spreadsheets.values.update({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Home!A1:H1',
+            range: 'Home!A1:J1',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
-                values: [['slug', 'heroBadge', 'heroTitle', 'heroSubtitle', 'heroStats', 'ctaTitle', 'ctaDescription', 'updatedAt']]
+                values: [['slug', 'heroBadge', 'heroTitle', 'heroSubtitle', 'heroStats', 'featuredTitle', 'featuredDescription', 'ctaTitle', 'ctaDescription', 'updatedAt']]
             }
         });
     }
@@ -876,14 +876,16 @@ async function updateHomePage(content: any) {
     // We only have one row for home, so we can just update row 2
     let rowIndex = 1;
 
-    // Format Data for Columns
-    // A: slug, B: heroBadge, C: heroTitle, D: heroSubtitle, E: heroStats (JSON), F: ctaTitle, G: ctaDescription, H: updatedAt
+    // A: slug, B: heroBadge, C: heroTitle, D: heroSubtitle, E: heroStats (JSON)
+    // F: featuredTitle, G: featuredDescription, H: ctaTitle, I: ctaDescription, J: updatedAt
     const rowData = [
         'home',
         content.heroBadge || '',
         content.heroTitle || '',
         content.heroSubtitle || '',
         JSON.stringify(content.heroStats || []),
+        content.featuredTitle || '',
+        content.featuredDescription || '',
         content.ctaTitle || '',
         content.ctaDescription || '',
         new Date().toISOString()
@@ -893,7 +895,7 @@ async function updateHomePage(content: any) {
 
     const res = await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `Home!A2:H2`,
+        range: `Home!A2:J2`,
         valueInputOption: 'USER_ENTERED',
         requestBody: { values: [rowData] }
     });
@@ -907,7 +909,7 @@ async function getHomePage() {
     try {
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Home!A2:H2',
+            range: 'Home!A2:J2',
         });
 
         const row = response.data.values?.[0];
@@ -924,10 +926,12 @@ async function getHomePage() {
                 heroStats: (() => {
                     try { return row[4] ? JSON.parse(row[4]) : [] } catch { return [] }
                 })(),
-                ctaTitle: row[5] || '',
-                ctaDescription: row[6] || ''
+                featuredTitle: row[5] || '',
+                featuredDescription: row[6] || '',
+                ctaTitle: row[7] || '',
+                ctaDescription: row[8] || ''
             },
-            updatedAt: row[7] || ''
+            updatedAt: row[9] || ''
         };
     } catch (e) {
         console.warn("Home sheet likely missing, returning defaults");

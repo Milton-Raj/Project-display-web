@@ -37,10 +37,14 @@ export default async function HomePage() {
             {/* Section Header */}
             <div className="text-center space-y-4">
               <h2 className="text-4xl md:text-5xl font-bold">
-                Featured <span className="gradient-text">Projects</span>
+                {data.featuredTitle || (
+                  <>
+                    Featured <span className="gradient-text">Projects</span>
+                  </>
+                )}
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Explore some of my best work showcasing innovation, design, and technical excellence.
+                {data.featuredDescription || "Explore some of my best work showcasing innovation, design, and technical excellence."}
               </p>
             </div>
 

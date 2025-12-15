@@ -256,6 +256,28 @@ export default function PageEditor() {
                                     </div>
 
                                     <div className="space-y-4 pt-4 border-t border-white/10">
+                                        <h3 className="text-lg font-semibold">Featured Projects Section</h3>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Section Title</label>
+                                                <Input
+                                                    value={formData.featuredTitle || ''}
+                                                    onChange={(e) => setFormData({ ...formData, featuredTitle: e.target.value })}
+                                                    placeholder="e.g., Featured Projects"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Section Description</label>
+                                                <Textarea
+                                                    value={formData.featuredDescription || ''}
+                                                    onChange={(e) => setFormData({ ...formData, featuredDescription: e.target.value })}
+                                                    placeholder="e.g., Explore some of my best work..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 border-t border-white/10">
                                         <h3 className="text-lg font-semibold">CTA Section</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
