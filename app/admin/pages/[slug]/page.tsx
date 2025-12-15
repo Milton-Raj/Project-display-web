@@ -23,6 +23,7 @@ export default function PageEditor() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadingItemIndex, setUploadingItemIndex] = useState<number | null>(null);
     const [formData, setFormData] = useState<any>({});
 
     useEffect(() => {
@@ -879,7 +880,7 @@ export default function PageEditor() {
                                                                         if (!file) return;
 
                                                                         try {
-                                                                            setIsUploading(true);
+                                                                            setUploadingItemIndex(index);
                                                                             const uploadFormData = new FormData();
                                                                             uploadFormData.append('file', file);
 
@@ -901,7 +902,7 @@ export default function PageEditor() {
 
                                                                             toast({
                                                                                 title: "Success",
-                                                                                description: "Image uploaded successfully. Click Save to update the page.",
+                                                                                description: "Image uploaded successfully.",
                                                                             });
                                                                         } catch (error: any) {
                                                                             console.error("Upload failed:", error);
@@ -911,22 +912,33 @@ export default function PageEditor() {
                                                                                 variant: "destructive",
                                                                             });
                                                                         } finally {
-                                                                            setIsUploading(false);
+                                                                            setUploadingItemIndex(null);
                                                                         }
                                                                     }}
                                                                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                                                 />
-                                                                <div className="text-center text-xs text-muted-foreground">- OR -</div>
-                                                                <Input
-                                                                    value={item.image || ''}
-                                                                    onChange={(e) => {
-                                                                        const newItems = [...(formData.showcaseItems || [])];
-                                                                        newItems[index] = { ...item, image: e.target.value };
-                                                                        setFormData({ ...formData, showcaseItems: newItems });
-                                                                    }}
-                                                                    placeholder="Enter image URL directly"
-                                                                    className="h-9 text-xs"
-                                                                />
+
+                                                                {uploadingItemIndex === index && (
+                                                                    <p className="text-xs text-blue-400 animate-pulse font-medium">
+                                                                        Uploading image... please wait.
+                                                                    </p>
+                                                                )}
+
+                                                                {!item.image && (
+                                                                    <>
+                                                                        <div className="text-center text-xs text-muted-foreground">- OR -</div>
+                                                                        <Input
+                                                                            value={item.image || ''}
+                                                                            onChange={(e) => {
+                                                                                const newItems = [...(formData.showcaseItems || [])];
+                                                                                newItems[index] = { ...item, image: e.target.value };
+                                                                                setFormData({ ...formData, showcaseItems: newItems });
+                                                                            }}
+                                                                            placeholder="Enter image URL directly"
+                                                                            className="h-9 text-xs"
+                                                                        />
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </CardContent>
