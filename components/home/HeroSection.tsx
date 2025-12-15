@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
+    badge?: string;
     title?: string;
     subtitle?: string;
     stats?: {
@@ -14,7 +15,7 @@ interface HeroSectionProps {
     }[];
 }
 
-export function HeroSection({ title, subtitle, stats }: HeroSectionProps) {
+export function HeroSection({ badge, title, subtitle, stats }: HeroSectionProps) {
     const defaultStats = [
         { value: "10+", label: "Projects Delivered" },
         { value: "5+", label: "Happy Clients" },
@@ -42,7 +43,7 @@ export function HeroSection({ title, subtitle, stats }: HeroSectionProps) {
                 >
                     <div className="inline-flex items-center space-x-2 glass px-4 py-2 rounded-full">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">Premium Digital Experiences</span>
+                        <span className="text-sm font-medium">{badge || "Premium Digital Experiences"}</span>
                     </div>
                 </motion.div>
 

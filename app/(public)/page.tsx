@@ -24,6 +24,7 @@ export default async function HomePage() {
     <div className="space-y-20">
       {/* Hero Section */}
       <HeroSection
+        badge={data.heroBadge}
         title={data.heroTitle}
         subtitle={data.heroSubtitle}
         stats={data.heroStats}

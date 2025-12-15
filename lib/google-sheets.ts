@@ -464,6 +464,9 @@ export async function getPageContent(slug: string) {
     if (slug.toLowerCase() === 'what-i-offer') {
         return getWhatIOfferPage();
     }
+    if (slug.toLowerCase() === 'home') {
+        return getHomePage();
+    }
 
     const sheets = await getGoogleSheets();
 
@@ -627,6 +630,11 @@ function getDefaultPageContent(slug: string) {
 export async function processPageUpdate(slug: string, content: any) {
     const normalizedSlug = slug.toString().trim().toLowerCase();
 
+    if (normalizedSlug === 'home') {
+        console.log("Routing to Home Page logic for slug:", normalizedSlug);
+        console.log("Content received:", JSON.stringify(content));
+        return updateHomePage(content);
+    }
     if (normalizedSlug === 'about') {
         console.log("Routing to About Page logic (Primary Check)");
         return updateAboutPage(content);
@@ -649,6 +657,9 @@ export async function processPageUpdate(slug: string, content: any) {
 
     // SAFETY FALLBACK: If we somehow found the 'about' row in the old sheet, redirect!
     // This catches cases where slug might be "about" but the top check failed for some reason
+    if (normalizedSlug === 'home') {
+        throw new Error("DEBUG TRAP: OLD LOGIC REACHED for Home. The server IS running the new code.");
+    }
     if (normalizedSlug === 'about') {
         throw new Error("DEBUG TRAP: OLD LOGIC REACHED. The server IS running the new code, but the logic fell through.");
     }
@@ -815,6 +826,113 @@ async function updateWhatIOfferPage(content: any) {
     });
 
     return { slug: 'what-i-offer', content, updatedAt };
+}
+
+
+
+async function ensureHomeSheetExists(sheets: any) {
+    try {
+        await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Home!A1',
+        });
+    } catch (error) {
+        console.log("Creating 'Home' sheet...");
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: SPREADSHEET_ID,
+            requestBody: {
+                requests: [{
+                    addSheet: {
+                        properties: { title: 'Home' }
+                    }
+                }]
+            }
+        });
+
+        // Initialize Header Row
+        await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Home!A1:H1',
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [['slug', 'heroBadge', 'heroTitle', 'heroSubtitle', 'heroStats', 'ctaTitle', 'ctaDescription', 'updatedAt']]
+            }
+        });
+    }
+}
+
+async function updateHomePage(content: any) {
+    console.log("Entering updateHomePage...");
+    const sheets = await getGoogleSheets();
+    await ensureHomeSheetExists(sheets);
+    console.log("Home sheet ensured.");
+
+    const rowsReference = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Home!A:A',
+    });
+
+    const rows = rowsReference.data.values || [];
+    // We only have one row for home, so we can just update row 2
+    let rowIndex = 1;
+
+    // Format Data for Columns
+    // A: slug, B: heroBadge, C: heroTitle, D: heroSubtitle, E: heroStats (JSON), F: ctaTitle, G: ctaDescription, H: updatedAt
+    const rowData = [
+        'home',
+        content.heroBadge || '',
+        content.heroTitle || '',
+        content.heroSubtitle || '',
+        JSON.stringify(content.heroStats || []),
+        content.ctaTitle || '',
+        content.ctaDescription || '',
+        new Date().toISOString()
+    ];
+
+    console.log("Updating Home sheet with data:", rowData);
+
+    const res = await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Home!A2:H2`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [rowData] }
+    });
+    console.log("Home sheet update response status:", res.status);
+
+    return { slug: 'home', content, updatedAt: rowData[7] };
+}
+
+async function getHomePage() {
+    const sheets = await getGoogleSheets();
+    try {
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Home!A2:H2',
+        });
+
+        const row = response.data.values?.[0];
+
+        if (!row) return getDefaultPageContent('home');
+
+        // Parse Columns back to Object
+        return {
+            slug: 'home',
+            content: {
+                heroBadge: row[1] || '',
+                heroTitle: row[2] || '',
+                heroSubtitle: row[3] || '',
+                heroStats: (() => {
+                    try { return row[4] ? JSON.parse(row[4]) : [] } catch { return [] }
+                })(),
+                ctaTitle: row[5] || '',
+                ctaDescription: row[6] || ''
+            },
+            updatedAt: row[7] || ''
+        };
+    } catch (e) {
+        console.warn("Home sheet likely missing, returning defaults");
+        return getDefaultPageContent('home');
+    }
 }
 
 async function ensureWhatIOfferSheetExists(sheets: any) {
