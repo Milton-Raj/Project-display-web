@@ -874,10 +874,45 @@ export default function PageEditor() {
                                                                 <Input
                                                                     type="file"
                                                                     accept="image/*"
-                                                                    onChange={(e) => {
-                                                                        const newItems = [...(formData.showcaseItems || [])];
-                                                                        newItems[index] = { ...item, image: e.target.value };
-                                                                        setFormData({ ...formData, showcaseItems: newItems });
+                                                                    onChange={async (e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (!file) return;
+
+                                                                        try {
+                                                                            setIsUploading(true);
+                                                                            const uploadFormData = new FormData();
+                                                                            uploadFormData.append('file', file);
+
+                                                                            const response = await fetch('/api/upload', {
+                                                                                method: 'POST',
+                                                                                body: uploadFormData,
+                                                                            });
+
+                                                                            if (!response.ok) {
+                                                                                const errorData = await response.json();
+                                                                                throw new Error(errorData.error || 'Upload failed');
+                                                                            }
+
+                                                                            const data = await response.json();
+
+                                                                            const newItems = [...(formData.showcaseItems || [])];
+                                                                            newItems[index] = { ...item, image: data.url };
+                                                                            setFormData({ ...formData, showcaseItems: newItems });
+
+                                                                            toast({
+                                                                                title: "Success",
+                                                                                description: "Image uploaded successfully. Click Save to update the page.",
+                                                                            });
+                                                                        } catch (error: any) {
+                                                                            console.error("Upload failed:", error);
+                                                                            toast({
+                                                                                title: "Error Uploading Image",
+                                                                                description: error.message || "Failed to upload image.",
+                                                                                variant: "destructive",
+                                                                            });
+                                                                        } finally {
+                                                                            setIsUploading(false);
+                                                                        }
                                                                     }}
                                                                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                                                 />
