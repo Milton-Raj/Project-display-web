@@ -280,7 +280,7 @@ export function ContactContent({ content }: ContactContentProps) {
                                 {/* File Upload Field */}
                                 <div className="space-y-2">
                                     <label htmlFor="attachment" className="text-sm font-medium">
-                                        SOW/Project Scope (Optional)
+                                        Document (Optional)
                                     </label>
                                     <div className="space-y-2">
                                         <div className="relative">

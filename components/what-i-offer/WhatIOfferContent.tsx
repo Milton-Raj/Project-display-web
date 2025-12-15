@@ -43,16 +43,16 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
         if (lowerTitle.includes('data') || lowerTitle.includes('sql') || lowerTitle.includes('backend')) {
             return <Database className={iconClass} />;
         }
-        if (lowerTitle.includes('interview') || lowerTitle.includes('training') || lowerTitle.includes('coaching') || lowerTitle.includes('career') || lowerTitle.includes('team')) {
+        if (lowerTitle.includes('interview') || lowerTitle.includes('training') || lowerTitle.includes('coaching') || lowerTitle.includes('team') || lowerTitle.includes('education')) {
             return <Users className={iconClass} />;
         }
         if (lowerTitle.includes('resume') || lowerTitle.includes('linkedin') || lowerTitle.includes('profile')) {
             return <FileText className={iconClass} />;
         }
-        if (lowerTitle.includes('product') || lowerTitle.includes('management') || lowerTitle.includes('business')) {
+        if (lowerTitle.includes('product') || lowerTitle.includes('management') || lowerTitle.includes('business') || lowerTitle.includes('job') || lowerTitle.includes('career')) {
             return <Briefcase className={iconClass} />;
         }
-        if (lowerTitle.includes('web') || lowerTitle.includes('frontend') || lowerTitle.includes('react')) {
+        if (lowerTitle.includes('web') || lowerTitle.includes('frontend') || lowerTitle.includes('react') || lowerTitle.includes('technical')) {
             return <Layout className={iconClass} />;
         }
 
