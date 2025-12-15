@@ -467,6 +467,9 @@ export async function getPageContent(slug: string) {
     if (slug.toLowerCase() === 'home') {
         return getHomePage();
     }
+    if (slug.toLowerCase() === 'contact') {
+        return getContactPage();
+    }
 
     const sheets = await getGoogleSheets();
 
@@ -634,6 +637,10 @@ export async function processPageUpdate(slug: string, content: any) {
         console.log("Routing to Home Page logic for slug:", normalizedSlug);
         console.log("Content received:", JSON.stringify(content));
         return updateHomePage(content);
+    }
+    if (normalizedSlug === 'contact') {
+        console.log("Routing to Contact Page logic");
+        return updateContactPage(content);
     }
     if (normalizedSlug === 'about') {
         console.log("Routing to About Page logic (Primary Check)");
@@ -865,6 +872,7 @@ async function updateHomePage(content: any) {
     console.log("Entering updateHomePage...");
     const sheets = await getGoogleSheets();
     await ensureHomeSheetExists(sheets);
+    await ensureContactSheetExists(sheets);
     console.log("Home sheet ensured.");
 
     const rowsReference = await sheets.spreadsheets.values.get({
@@ -936,6 +944,101 @@ async function getHomePage() {
     } catch (e) {
         console.warn("Home sheet likely missing, returning defaults");
         return getDefaultPageContent('home');
+    }
+}
+
+async function ensureContactSheetExists(sheets: any) {
+    const spreadsheetId = SPREADSHEET_ID;
+    const metadata = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetExists = metadata.data.sheets?.some((s: any) => s.properties?.title === 'Contact');
+
+    if (!sheetExists) {
+        console.log("Creating Contact sheet...");
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                requests: [{ addSheet: { properties: { title: 'Contact' } } }]
+            }
+        });
+
+        // Initialize Header Row
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: 'Contact!A1:K1',
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                // A: slug, B: headerTitle, C: headerSubtitle, D: email, E: phone, F: whatsapp, G: linkedin, H: instagram, I: responseTimeTitle, J: responseTimeDescription, K: updatedAt
+                values: [['slug', 'headerTitle', 'headerSubtitle', 'email', 'phone', 'whatsapp', 'linkedin', 'instagram', 'responseTimeTitle', 'responseTimeDescription', 'updatedAt']]
+            }
+        });
+    }
+}
+
+export async function updateContactPage(content: any) {
+    const sheets = await getGoogleSheets();
+    await ensureContactSheetExists(sheets);
+
+    // Format Data for Columns
+    // A: slug, B: headerTitle, C: headerSubtitle, D: email, E: phone, F: whatsapp, G: linkedin, H: instagram, I: responseTimeTitle, J: responseTimeDescription, K: updatedAt
+    const rowData = [
+        'contact',
+        content.headerTitle || '',
+        content.headerSubtitle || '',
+        content.email || '',
+        content.phone || '',
+        content.whatsapp || '',
+        content.linkedin || '',
+        content.instagram || '',
+        content.responseTimeTitle || '',
+        content.responseTimeDescription || '',
+        new Date().toISOString()
+    ];
+
+    console.log("Updating Contact sheet with data:", rowData);
+
+    const res = await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Contact!A2:K2`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [rowData] }
+    });
+
+    console.log("Contact Page Updated. Response:", res.status);
+
+    return { success: true, timestamp: new Date().toISOString() };
+}
+
+export async function getContactPage() {
+    const sheets = await getGoogleSheets();
+    try {
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Contact!A2:K2',
+        });
+
+        const row = response.data.values?.[0];
+
+        if (!row) return getDefaultPageContent('contact');
+
+        // Parse Columns back to Object
+        return {
+            slug: 'contact',
+            content: {
+                headerTitle: row[1] || '',
+                headerSubtitle: row[2] || '',
+                email: row[3] || '',
+                phone: row[4] || '',
+                whatsapp: row[5] || '',
+                linkedin: row[6] || '',
+                instagram: row[7] || '',
+                responseTimeTitle: row[8] || '',
+                responseTimeDescription: row[9] || ''
+            },
+            updatedAt: row[10] || ''
+        };
+    } catch (e) {
+        console.warn("Contact sheet likely missing, returning defaults");
+        return getDefaultPageContent('contact');
     }
 }
 
