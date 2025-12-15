@@ -10,7 +10,8 @@ export const metadata = {
 
 export default async function WhatIOfferPage() {
     const pageData = await getPageContent('what-i-offer');
-    const content = pageData?.content || {};
+    // Fix: Unwrap content if it's nested (robustness against data structure changes)
+    const content = pageData?.content?.content || pageData?.content || {};
 
     return <WhatIOfferContent content={content} />;
 }
