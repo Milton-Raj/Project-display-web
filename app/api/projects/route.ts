@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createProject, getAllProjects, getProjectBySlug, updateProject, deleteProject } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);

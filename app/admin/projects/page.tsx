@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ export default function AdminProjectsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+    const router = useRouter();
 
     // State for delete confirmation
     const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export default function AdminProjectsPage() {
 
             // Reload from server to ensure sync
             loadProjects();
+            router.refresh();
         } catch (error) {
             console.error("Failed to delete project:", error);
             toast({

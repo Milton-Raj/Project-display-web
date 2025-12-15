@@ -49,6 +49,9 @@ export async function DELETE(
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
 
+        // Wait a moment for Google Sheets to propagate the deletion
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Revalidate all paths where projects appear
         revalidatePath('/projects');
         revalidatePath('/admin/projects');
