@@ -122,13 +122,23 @@ export async function deleteContact(id: string) {
 
     if (rowIndex === -1) return false;
 
+    // Dynamically find the Sheet ID for 'Contacts'
+    const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+    const contactsSheet = metadata.data.sheets?.find(s => s.properties?.title === 'Contacts');
+    const sheetId = contactsSheet?.properties?.sheetId;
+
+    if (sheetId === undefined || sheetId === null) {
+        console.error("Contacts sheet not found during delete");
+        return false;
+    }
+
     await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
             requests: [{
                 deleteDimension: {
                     range: {
-                        sheetId: 1222434613, // ID for Contacts sheet
+                        sheetId: sheetId,
                         dimension: 'ROWS',
                         startIndex: rowIndex,
                         endIndex: rowIndex + 1,
@@ -429,15 +439,23 @@ export async function deleteProject(id: string) {
             throw new Error('Project not found');
         }
 
-        // CRITICAL FIX: Use the correct sheet ID for Projects
-        // Sheet ID can be found in the URL: gid=1222434613
+        // Dynamically find the Sheet ID for 'Projects'
+        const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+        const projectsSheet = metadata.data.sheets?.find(s => s.properties?.title === 'Projects');
+
+        if (!projectsSheet?.properties?.sheetId && projectsSheet?.properties?.sheetId !== 0) {
+            throw new Error("Projects sheet not found");
+        }
+
+        const sheetId = projectsSheet.properties.sheetId;
+
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: SPREADSHEET_ID,
             requestBody: {
                 requests: [{
                     deleteDimension: {
                         range: {
-                            sheetId: 1222434613, // Projects sheet ID (from URL gid parameter)
+                            sheetId: sheetId,
                             dimension: 'ROWS',
                             startIndex: rowIndex,
                             endIndex: rowIndex + 1,
