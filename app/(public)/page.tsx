@@ -21,7 +21,7 @@ export default async function HomePage() {
   const data = pageData?.content || {};
 
   return (
-    <div className="space-y-20">
+    <div className="space-y-0">
       {/* Hero Section */}
       <HeroSection
         badge={data.heroBadge}
@@ -32,7 +32,7 @@ export default async function HomePage() {
 
       {/* Featured Projects */}
       {featuredProjects.length > 0 && (
-        <section className="container-custom py-20">
+        <section className="container-custom py-12 md:py-20">
           <div className="space-y-12">
             {/* Section Header */}
             <div className="text-center space-y-4">
@@ -69,7 +69,7 @@ export default async function HomePage() {
       )}
 
       {/* CTA Section */}
-      <section className="container-custom py-20">
+      <section className="container-custom py-12 md:py-20">
         <div className="glass-strong rounded-3xl p-12 md:p-16 text-center space-y-8 shadow-premium-lg">
           <h2 className="text-4xl md:text-5xl font-bold">
             {data.ctaTitle || (
