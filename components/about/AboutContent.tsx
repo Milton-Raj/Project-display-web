@@ -93,7 +93,17 @@ export function AboutContent({ content }: AboutContentProps) {
                         )}
                     </div>
 
-                    {/* Bio Paragraphs REMOVED as per request */}
+                    {/* Bio Paragraphs */}
+                    {content.heroSubtitle2 && (
+                        <p className="text-lg text-muted-foreground leading-relaxed">
+                            {content.heroSubtitle2}
+                        </p>
+                    )}
+                    {content.heroSubtitle3 && (
+                        <p className="text-lg text-muted-foreground leading-relaxed">
+                            {content.heroSubtitle3}
+                        </p>
+                    )}
 
                     <div className="flex flex-wrap gap-4 pt-4">
                         <Link href="/projects">

@@ -1,5 +1,7 @@
 import { google } from 'googleapis';
 import type { Project, ProjectCategory } from '@/types/project';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Initialize OAuth2 Client
 export async function getGoogleSheets() {
@@ -17,6 +19,42 @@ export async function getGoogleSheets() {
 }
 
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID!;
+
+// HELPER FOR LOCAL FALLBACKS
+const DATA_DIR = path.join(process.cwd(), 'data');
+
+async function getLocalProjects(): Promise<Project[]> {
+    try {
+        const filePath = path.join(DATA_DIR, 'projects.json');
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (e) {
+        console.warn('Failed to read local projects:', e);
+    }
+    return [];
+}
+
+async function getLocalPageContent(slug: string) {
+    try {
+        const filePath = path.join(DATA_DIR, 'content.json');
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            const allContent = JSON.parse(data);
+            if (allContent[slug]) {
+                return {
+                    slug,
+                    content: allContent[slug],
+                    updatedAt: new Date().toISOString()
+                };
+            }
+        }
+    } catch (e) {
+        console.warn(`Failed to read local page content for ${slug}:`, e);
+    }
+    return null;
+}
 
 // ==================== CONTACTS ====================
 
@@ -308,8 +346,8 @@ export async function getAllProjects(): Promise<Project[]> {
             return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
         });
     } catch (error) {
-        console.error('Error in getAllProjects:', error);
-        throw error;
+        console.error('Error in getAllProjects (Google API), trying local fallback:', error);
+        return getLocalProjects();
     }
 }
 
@@ -561,8 +599,9 @@ async function getAboutPage() {
             updatedAt: content.updatedAt,
         };
     } catch (error) {
-        console.warn('Error getting About page from dedicated sheet (might not exist yet):', error);
-        // Fallback to legacy Pages sheet if About sheet fails
+        console.warn('Error getting About page from Google (trying local fallback):', error);
+        const local = await getLocalPageContent('about');
+        if (local) return local;
         return getDefaultPageContent('about');
     }
 }
@@ -601,7 +640,9 @@ async function getWhatIOfferPage() {
             updatedAt: content.updatedAt,
         };
     } catch (error) {
-        console.warn('Error getting WhatIOffer page (might not exist yet):', error);
+        console.warn('Error getting WhatIOffer page from Google (trying local fallback):', error);
+        const local = await getLocalPageContent('what-i-offer');
+        if (local) return local;
         return getDefaultPageContent('what-i-offer');
     }
 }
@@ -969,7 +1010,9 @@ async function getHomePage() {
             updatedAt: row[9] || ''
         };
     } catch (e) {
-        console.warn("Home sheet likely missing, returning defaults");
+        console.warn("Home page Google fetch failed (trying local fallback)");
+        const local = await getLocalPageContent('home');
+        if (local) return local;
         return getDefaultPageContent('home');
     }
 }
@@ -1064,7 +1107,9 @@ export async function getContactPage() {
             updatedAt: row[10] || ''
         };
     } catch (e) {
-        console.warn("Contact sheet likely missing, returning defaults");
+        console.warn("Contact page Google fetch failed (trying local fallback)");
+        const local = await getLocalPageContent('contact');
+        if (local) return local;
         return getDefaultPageContent('contact');
     }
 }

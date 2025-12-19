@@ -1,0 +1,136 @@
+{
+  "home": {
+    "heroTitle": "Building Digital Experiences That Matter",
+    "heroSubtitle": "Full-stack developer specializing in building exceptional digital experiences.",
+    "ctaTitle": "Ready to start your project?",
+    "ctaDescription": "Let's collaborate to bring your vision to life."
+  },
+  "about": {
+    "heroBadge": "CEO & End-to-End Project Developer",
+    "heroTitle": "Hi, I'm Milton Raj",
+    "heroSubtitle1": "Building scalable apps for web & mobile",
+    "heroSubtitle2": "I'm a seasoned CEO and Full Stack Developer with 11+ years of experience transforming innovative ideas into robust, scalable solutions. My expertise spans modern web technologies, mobile app development, AI/ML integration, and strategic project management.",
+    "heroSubtitle3": "My approach combines technical excellence with business acumen, ensuring every project not only meets technical requirements but drives real business value. I believe in empowering teams, writing clean maintainable code, and building products that make a lasting impact.",
+    "experienceYears": "11+",
+    "skills": [
+      {
+        "name": "Full Stack Development",
+        "description": "React, Next.js, Node.js, TypeScript, Python, MongoDB, PostgreSQL"
+      },
+      {
+        "name": "Web Development",
+        "description": "HTML5, CSS3, JavaScript, Responsive Design, Progressive Web Apps, SEO"
+      },
+      {
+        "name": "Generative AI",
+        "description": "ChatGPT, Claude, Gemini, AI Agents, Prompt Engineering, RAG Systems"
+      },
+      {
+        "name": "AI & Machine Learning",
+        "description": "TensorFlow, OpenAI, LangChain, Computer Vision, NLP, ML Model Deployment"
+      },
+      {
+        "name": "Project Management",
+        "description": "Agile, Scrum, Team Leadership, Strategic Planning, 11+ Years Experience"
+      },
+      {
+        "name": "Mobile Development",
+        "description": "React Native, Flutter, iOS, Android, Cross-Platform Solutions"
+      },
+      {
+        "name": "Business Coaching",
+        "description": "Career Development, Interview Training, Resume Optimization, 500+ Trained"
+      },
+      {
+        "name": "Cloud Architecture",
+        "description": "AWS, Google Cloud, Azure, DevOps, CI/CD, Scalable Infrastructure"
+      }
+    ],
+    "skillsTitle": "My Expertise",
+    "skillsSubtitle": "Specialized skills and technologies I use to build exceptional digital products",
+    "certificationsTitle": "Certifications & Achievements",
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "Google Cloud Professional",
+      "Meta React Developer",
+      "MongoDB Certified Developer",
+      "Agile & Scrum Master Certified",
+      "11+ Years Industry Leadership"
+    ]
+  },
+  "contact": {
+    "email": "chrixlinitsolutions@gmail.com",
+    "phone": "+919151214181",
+    "address": "123 Tech Street",
+    "headerTitle": "Get in Touch",
+    "headerSubtitle": "Have a project in mind? Let's discuss how we can work together.",
+    "whatsapp": "+919151214181",
+    "linkedin": "https://www.linkedin.com/in/milton-raj/"
+  },
+  "what-i-offer": {
+    "heroTitle": "I build software, train teams, and help job seekers upgrade their career.",
+    "heroSubtitle": "Book a Call | WhatsApp Me",
+    "services": [
+      {
+        "title": "Custom Web & Mobile App Development",
+        "description": "Build scalable, high-performance applications tailored to your business needs.",
+        "provides": "Custom-built web apps\nCustom-built mobile apps (Android / iOS)\nReady-made business apps\nFull support until deployment",
+        "audience": "Entrepreneurs launching a business\nSMEs scaling operations"
+      },
+      {
+        "title": "Interview Training for Students & Employees",
+        "description": "Result-oriented coaching to crack technical and HR rounds with confidence.",
+        "provides": "Interview strategy coaching\nTechnical + HR practice rounds\nCommunication training\nReal-world mock scenarios",
+        "audience": "Freshers & Job Seekers\nProfessionals switching careers"
+      },
+      {
+        "title": "Resume / Job Portal / LinkedIn Optimization",
+        "description": "Stand out to recruiters with ATS-friendly resumes and optimized profiles.",
+        "provides": "ATS-friendly resume writing\nLinkedIn profile optimization\nJob portal complete setup\nKeyword strategy for search",
+        "audience": "Job Seekers\nStudents preparing for placements"
+      }
+    ],
+    "whyChooseMe": [
+      {
+        "title": "Hands-on Experience",
+        "desc": "Real-world expertise in software development and delivery."
+      },
+      {
+        "title": "500+ Trained",
+        "desc": "Helped hundreds of students and employees achieve their career goals."
+      },
+      {
+        "title": "Full Support",
+        "desc": "From the first call to final delivery, I'm with you every step."
+      },
+      {
+        "title": "Transparent Pricing",
+        "desc": "No hidden costs. Zero outsourcing. You work directly with me."
+      },
+      {
+        "title": "Real Results",
+        "desc": "Proven track record of successful apps and hired candidates."
+      },
+      {
+        "title": "Custom Solutions",
+        "desc": "Updated Why Choose Me Item 6 DescTailored strategies and code, not generic templates."
+      }
+    ],
+    "showcaseTitle": "Proof of Work",
+    "showcaseSubtitle": "Don't just take my word for it. See the results.",
+    "ctaTitle": "Ready to Level Up?",
+    "ctaDescription": "Whether you need a custom app, interview training, or a career profile makeover, I'm here to help you succeed.",
+    "showcaseItems": [
+      {
+        "title": "Business Apps Delivered",
+        "description": "Updated Business Apps Delivered DescCustom solutions helping businesses scale operations efficiently.",
+        "image": ""
+      },
+      {
+        "title": "Career Transformations",
+        "description": "Students placed in top companies after training and profile optimization.",
+        "image": ""
+      }
+    ]
+  }
+}
