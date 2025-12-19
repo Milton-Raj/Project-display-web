@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import type { Project } from '@/types/project';
+import type { Project, ProjectCategory } from '@/types/project';
 
 // Initialize OAuth2 Client
 export async function getGoogleSheets() {
@@ -198,7 +198,7 @@ export async function createProject(project: any) {
     return { id, ...project, createdAt };
 }
 
-export async function getAllProjects() {
+export async function getAllProjects(): Promise<Project[]> {
     try {
         const sheets = await getGoogleSheets();
 
@@ -227,7 +227,7 @@ export async function getAllProjects() {
                     slug: safeString(row[2]).trim(),
                     description: safeString(row[3]),
                     longDescription: safeString(row[4]),
-                    category: safeString(row[5]).includes(',') ? safeString(row[5]).split(',').map(c => c.trim()) : safeString(row[5]),
+                    category: (safeString(row[5]).includes(',') ? safeString(row[5]).split(',').map(c => c.trim()) : safeString(row[5])) as ProjectCategory | ProjectCategory[],
                     technologies,
                     techStack: technologies,
                     image: safeString(row[7]),
@@ -261,12 +261,12 @@ export async function getAllProjects() {
                     playStoreUrl: safeString(row[17]),
                     apkUrl: safeString(row[18]),
                     testFlightUrl: safeString(row[19]),
-                    demoType: safeString(row[20]) || 'none',
-                    status: safeString(row[21]) || 'live',
+                    demoType: (safeString(row[20]) || 'none') as Project['demoType'],
+                    status: (safeString(row[21]) || 'live') as Project['status'],
 
                     // Additional fields
                     views: 0,
-                };
+                } as Project;
             } catch (parseError) {
                 console.error(`Error parsing project at row ${index + 2}:`, parseError);
                 // Return a minimal project object to avoid breaking the entire list
@@ -297,7 +297,7 @@ export async function getAllProjects() {
                     demoType: 'none',
                     status: 'live',
                     views: 0,
-                };
+                } as Project;
             }
         });
 
