@@ -212,30 +212,38 @@ export async function getAllProjects() {
 
         const projects = rows.map((row: any[], index: number) => {
             try {
-                const technologies = row[6]?.split(',').map((t: string) => t.trim()) || [];
+                // Defensive check if row is basic array
+                if (!Array.isArray(row)) {
+                    throw new Error('Row is not an array');
+                }
+
+                // Safely convert values to string if they are numbers/null
+                const safeString = (val: any) => (val === null || val === undefined) ? '' : String(val);
+
+                const technologies = safeString(row[6]).split(',').map((t: string) => t.trim()).filter(Boolean) || [];
                 return {
-                    id: row[0] || '',
-                    title: row[1] || '',
-                    slug: row[2] || '',
-                    description: row[3] || '',
-                    longDescription: row[4] || '',
-                    category: row[5]?.includes(',') ? row[5].split(',') : (row[5] || ''),
+                    id: safeString(row[0]),
+                    title: safeString(row[1]),
+                    slug: safeString(row[2]).trim(),
+                    description: safeString(row[3]),
+                    longDescription: safeString(row[4]),
+                    category: safeString(row[5]).includes(',') ? safeString(row[5]).split(',').map(c => c.trim()) : safeString(row[5]),
                     technologies,
                     techStack: technologies,
-                    image: row[7] || '',
-                    thumbnail: row[7] || '',
-                    demoUrl: row[8] || '',
-                    githubUrl: row[9] || '',
-                    featured: row[10] === 'TRUE',
-                    createdAt: row[11] || '',
-                    updatedAt: row[11] || '',
+                    image: safeString(row[7]),
+                    thumbnail: safeString(row[7]),
+                    demoUrl: safeString(row[8]),
+                    githubUrl: safeString(row[9]),
+                    featured: safeString(row[10]).toUpperCase() === 'TRUE',
+                    createdAt: safeString(row[11]),
+                    updatedAt: safeString(row[11]),
 
                     // New Fields Parsing
-                    features: row[12] ? row[12].split('|') : [],
-                    screenshots: row[13] ? row[13].split(',') : [],
+                    features: safeString(row[12]) ? safeString(row[12]).split('|').map(f => f.trim()) : [],
+                    screenshots: safeString(row[13]) ? safeString(row[13]).split(',').map(s => s.trim()) : [],
                     documents: (() => {
                         try {
-                            const raw = row[14];
+                            const raw = safeString(row[14]);
                             if (!raw) return [];
                             // Handle simple URL case (if user pasted raw URL)
                             if (raw.startsWith('http') && !raw.startsWith('[')) {
@@ -248,25 +256,24 @@ export async function getAllProjects() {
                             return [];
                         }
                     })(),
-                    videoUrl: row[15] || '',
-                    appStoreUrl: row[16] || '',
-                    playStoreUrl: row[17] || '',
-                    apkUrl: row[18] || '',
-                    testFlightUrl: row[19] || '',
-                    demoType: row[20] || 'none',
-                    status: row[21] || 'live',
+                    videoUrl: safeString(row[15]),
+                    appStoreUrl: safeString(row[16]),
+                    playStoreUrl: safeString(row[17]),
+                    apkUrl: safeString(row[18]),
+                    testFlightUrl: safeString(row[19]),
+                    demoType: safeString(row[20]) || 'none',
+                    status: safeString(row[21]) || 'live',
 
                     // Additional fields
                     views: 0,
                 };
             } catch (parseError) {
                 console.error(`Error parsing project at row ${index + 2}:`, parseError);
-                console.error('Row data:', row);
                 // Return a minimal project object to avoid breaking the entire list
                 return {
-                    id: row[0] || `error_${index}`,
-                    title: row[1] || 'Error loading project',
-                    slug: row[2] || `error-${index}`,
+                    id: row && row[0] ? String(row[0]) : `error_${index}`,
+                    title: row && row[1] ? String(row[1]) : 'Error loading project',
+                    slug: row && row[2] ? String(row[2]).trim() : `error-${index}`,
                     description: 'Error parsing project data',
                     longDescription: '',
                     category: [],
@@ -295,9 +302,10 @@ export async function getAllProjects() {
         });
 
         console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
-        console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
         return projects.sort((a: any, b: any) => {
-            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
         });
     } catch (error) {
         console.error('Error in getAllProjects:', error);
@@ -307,7 +315,8 @@ export async function getAllProjects() {
 
 export async function getProjectBySlug(slug: string) {
     const projects = await getAllProjects();
-    return projects.find(p => p.slug === slug) || null;
+    const normalizedSlug = slug.trim().toLowerCase();
+    return projects.find(p => p.slug.trim().toLowerCase() === normalizedSlug) || null;
 }
 
 export async function getProjectById(id: string) {

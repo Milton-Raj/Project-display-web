@@ -48,17 +48,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                     {Array.isArray(project.category) ? (
                                         project.category.map((cat, idx) => (
                                             <Badge key={idx} variant="outline" className="text-primary border-primary/30">
-                                                {cat.replace('-', ' ').toUpperCase()}
+                                                {typeof cat === 'string' ? cat.replace(/-/g, ' ').toUpperCase() : 'PROJECT'}
                                             </Badge>
                                         ))
                                     ) : (
                                         <Badge variant="outline" className="text-primary border-primary/30">
-                                            {project.category.replace('-', ' ').toUpperCase()}
+                                            {typeof project.category === 'string' ? project.category.replace(/-/g, ' ').toUpperCase() : 'PROJECT'}
                                         </Badge>
                                     )}
                                 </div>
                                 <h1 className="text-4xl md:text-5xl font-bold gradient-text-primary leading-tight">
-                                    {project.title}
+                                    {project.title || 'Untitled Project'}
                                 </h1>
                                 <div className="mt-4">
                                     <p className="text-lg md:text-xl text-muted-foreground leading-relaxed break-words">
@@ -107,11 +107,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                     Tech Stack
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {project.techStack.map((tech: string) => (
-                                        <Badge key={tech} variant="secondary" className="bg-white/5 hover:bg-white/10">
-                                            {tech}
-                                        </Badge>
-                                    ))}
+                                    {Array.isArray(project.techStack) ? (
+                                        project.techStack.map((tech: string) => (
+                                            <Badge key={tech} variant="secondary" className="bg-white/5 hover:bg-white/10">
+                                                {tech}
+                                            </Badge>
+                                        ))
+                                    ) : (
+                                        <span className="text-sm text-muted-foreground">No tech stack listed</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -150,12 +154,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                         <Card className="p-8 glass">
                             <h2 className="text-2xl font-bold mb-6">Key Features</h2>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                {project.features.map((feature: string, index: number) => (
-                                    <div key={index} className="flex items-start p-4 rounded-xl bg-white/5 border border-white/5">
-                                        <CheckCircle className="w-5 h-5 text-primary mr-3 mt-0.5" />
-                                        <span className="text-sm text-muted-foreground">{feature}</span>
+                                {Array.isArray(project.features) && project.features.length > 0 ? (
+                                    project.features.map((feature: string, index: number) => (
+                                        <div key={index} className="flex items-start p-4 rounded-xl bg-white/5 border border-white/5">
+                                            <CheckCircle className="w-5 h-5 text-primary mr-3 mt-0.5" />
+                                            <span className="text-sm text-muted-foreground">{feature}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-2 text-center py-4 text-muted-foreground">
+                                        No specific features listed
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </Card>
 
@@ -224,7 +234,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                         <Calendar className="w-4 h-4 mr-2" />
                                         Date
                                     </span>
-                                    <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+                                    <span>
+                                        {project.createdAt && !isNaN(new Date(project.createdAt).getTime())
+                                            ? new Date(project.createdAt).toLocaleDateString()
+                                            : 'N/A'
+                                        }
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between py-2 border-b border-white/5">
                                     <span className="text-muted-foreground">Status</span>
@@ -237,13 +252,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                                     <div className="flex flex-wrap gap-1 justify-end">
                                         {Array.isArray(project.category) ? (
                                             project.category.map((cat, idx) => (
-                                                <span key={idx} className="capitalize text-sm">
-                                                    {cat.replace('-', ' ')}
+                                                <span key={idx} className="capitalize text-sm text-right">
+                                                    {typeof cat === 'string' ? cat.replace(/-/g, ' ') : 'Project'}
                                                     {idx < project.category.length - 1 && ', '}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="capitalize">{project.category.replace('-', ' ')}</span>
+                                            <span className="capitalize">{typeof project.category === 'string' ? project.category.replace(/-/g, ' ') : 'Project'}</span>
                                         )}
                                     </div>
                                 </div>
