@@ -1,4 +1,4 @@
-// Re-export all functions from google-sheets.ts
+// Re-export all functions from supabase-db.ts
 export {
     // Contacts
     createContact,
@@ -30,4 +30,4 @@ export {
 
     // Stats
     getStats,
-} from './google-sheets';
+} from './supabase-db';
