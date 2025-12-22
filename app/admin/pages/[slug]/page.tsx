@@ -452,31 +452,61 @@ export default function PageEditor() {
                                         {/* Skills List */}
                                         <div className="space-y-3">
                                             <label className="text-sm font-medium">Skills</label>
-                                            <div className="space-y-2">
-                                                {(formData.skills || []).map((skill: string, index: number) => (
-                                                    <div key={index} className="flex gap-2">
-                                                        <Input
-                                                            value={skill}
-                                                            onChange={(e) => {
-                                                                const newSkills = [...(formData.skills || [])];
-                                                                newSkills[index] = e.target.value;
-                                                                setFormData({ ...formData, skills: newSkills });
-                                                            }}
-                                                            placeholder="e.g., React, Next.js, TypeScript"
-                                                            className="flex-1"
-                                                        />
-                                                        <Button
-                                                            type="button"
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                const newSkills = (formData.skills || []).filter((_: string, i: number) => i !== index);
-                                                                setFormData({ ...formData, skills: newSkills });
-                                                            }}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
+                                            <div className="space-y-4">
+                                                {(formData.skills || []).map((skill: any, index: number) => (
+                                                    <Card key={index} className="bg-card/50 border-white/10">
+                                                        <CardContent className="space-y-3 pt-4">
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex-1 space-y-3">
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-xs font-medium text-muted-foreground">Skill Name</label>
+                                                                        <Input
+                                                                            value={typeof skill === 'string' ? skill : (skill?.name || '')}
+                                                                            onChange={(e) => {
+                                                                                const newSkills = [...(formData.skills || [])];
+                                                                                if (typeof newSkills[index] === 'string') {
+                                                                                    newSkills[index] = { name: e.target.value, description: '' };
+                                                                                } else {
+                                                                                    newSkills[index] = { ...newSkills[index], name: e.target.value };
+                                                                                }
+                                                                                setFormData({ ...formData, skills: newSkills });
+                                                                            }}
+                                                                            placeholder="e.g., Full Stack Development"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-xs font-medium text-muted-foreground">Description / Technologies</label>
+                                                                        <Textarea
+                                                                            value={typeof skill === 'string' ? '' : (skill?.description || '')}
+                                                                            onChange={(e) => {
+                                                                                const newSkills = [...(formData.skills || [])];
+                                                                                if (typeof newSkills[index] === 'string') {
+                                                                                    newSkills[index] = { name: newSkills[index], description: e.target.value };
+                                                                                } else {
+                                                                                    newSkills[index] = { ...newSkills[index], description: e.target.value };
+                                                                                }
+                                                                                setFormData({ ...formData, skills: newSkills });
+                                                                            }}
+                                                                            placeholder="e.g., React, Next.js, Node.js, TypeScript, Python, MongoDB, PostgreSQL"
+                                                                            className="min-h-[80px]"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="destructive"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        const newSkills = (formData.skills || []).filter((_: any, i: number) => i !== index);
+                                                                        setFormData({ ...formData, skills: newSkills });
+                                                                    }}
+                                                                    className="mt-6"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
                                                 ))}
                                             </div>
                                             <Button
@@ -484,7 +514,7 @@ export default function PageEditor() {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => {
-                                                    const newSkills = [...(formData.skills || []), ''];
+                                                    const newSkills = [...(formData.skills || []), { name: '', description: '' }];
                                                     setFormData({ ...formData, skills: newSkills });
                                                 }}
                                                 className="w-full"
