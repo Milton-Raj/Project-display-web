@@ -448,6 +448,51 @@ export default function PageEditor() {
                                                 onChange={(e) => setFormData({ ...formData, skillsSubtitle: e.target.value })}
                                             />
                                         </div>
+
+                                        {/* Skills List */}
+                                        <div className="space-y-3">
+                                            <label className="text-sm font-medium">Skills</label>
+                                            <div className="space-y-2">
+                                                {(formData.skills || []).map((skill: string, index: number) => (
+                                                    <div key={index} className="flex gap-2">
+                                                        <Input
+                                                            value={skill}
+                                                            onChange={(e) => {
+                                                                const newSkills = [...(formData.skills || [])];
+                                                                newSkills[index] = e.target.value;
+                                                                setFormData({ ...formData, skills: newSkills });
+                                                            }}
+                                                            placeholder="e.g., React, Next.js, TypeScript"
+                                                            className="flex-1"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const newSkills = (formData.skills || []).filter((_: string, i: number) => i !== index);
+                                                                setFormData({ ...formData, skills: newSkills });
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const newSkills = [...(formData.skills || []), ''];
+                                                    setFormData({ ...formData, skills: newSkills });
+                                                }}
+                                                className="w-full"
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Add Skill
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4 pt-4 border-t border-white/10">
@@ -459,15 +504,50 @@ export default function PageEditor() {
                                                 onChange={(e) => setFormData({ ...formData, certificationsTitle: e.target.value })}
                                             />
                                         </div>
-                                        <div className="space-y-4">
+
+                                        {/* Certifications List */}
+                                        <div className="space-y-3">
+                                            <label className="text-sm font-medium">Certifications</label>
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium">Certifications (Comma separated)</label>
-                                                <Textarea
-                                                    value={Array.isArray(formData.certifications) ? formData.certifications.join(', ') : (formData.certifications || '')}
-                                                    onChange={(e) => setFormData({ ...formData, certifications: e.target.value.split(',').map((s: string) => s.trim()) })}
-                                                    placeholder="Cert 1, Cert 2..."
-                                                />
+                                                {(formData.certifications || []).map((cert: string, index: number) => (
+                                                    <div key={index} className="flex gap-2">
+                                                        <Input
+                                                            value={cert}
+                                                            onChange={(e) => {
+                                                                const newCerts = [...(formData.certifications || [])];
+                                                                newCerts[index] = e.target.value;
+                                                                setFormData({ ...formData, certifications: newCerts });
+                                                            }}
+                                                            placeholder="e.g., AWS Certified Solutions Architect"
+                                                            className="flex-1"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const newCerts = (formData.certifications || []).filter((_: string, i: number) => i !== index);
+                                                                setFormData({ ...formData, certifications: newCerts });
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
                                             </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const newCerts = [...(formData.certifications || []), ''];
+                                                    setFormData({ ...formData, certifications: newCerts });
+                                                }}
+                                                className="w-full"
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Add Certification
+                                            </Button>
                                         </div>
                                     </div>
                                 </>
