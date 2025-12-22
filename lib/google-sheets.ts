@@ -1,24 +1,9 @@
-import { google } from 'googleapis';
 import type { Project, ProjectCategory } from '@/types/project';
+import { supabase, supabaseAdmin } from './supabase';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Initialize OAuth2 Client
-export async function getGoogleSheets() {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        'https://developers.google.com/oauthplayground'
-    );
-
-    oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN
-    });
-
-    return google.sheets({ version: 'v4', auth: oauth2Client });
-}
-
-const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID!;
+// Google Sheets related constants and functions removed after Supabase migration
 
 // HELPER FOR LOCAL FALLBACKS
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -66,125 +51,96 @@ export async function createContact(contact: {
     message: string;
     attachment?: string;
 }) {
-    const sheets = await getGoogleSheets(); // Use await getGoogleSheets()
     const id = `contact_${Date.now()}`;
     const createdAt = new Date().toISOString();
 
-    await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Contacts!A:I',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[
-                id,
-                contact.name,
-                contact.email,
-                contact.phone,
-                contact.subject,
-                contact.message,
-                contact.attachment || '',
-                'new',
-                createdAt,
-            ]],
-        },
-    });
+    const { data, error } = await supabaseAdmin
+        .from('contacts')
+        .insert({
+            id,
+            name: contact.name,
+            email: contact.email,
+            phone: contact.phone,
+            subject: contact.subject,
+            message: contact.message,
+            attachment: contact.attachment || '',
+            status: 'unread',
+            created_at: createdAt,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating contact in Supabase:', error);
+        throw error;
+    }
 
     return {
-        id,
-        ...contact,
-        status: 'new' as const,
-        createdAt,
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject,
+        message: data.message,
+        attachment: data.attachment,
+        status: data.status,
+        createdAt: data.created_at,
     };
 }
 
 export async function getAllContacts() {
-    const sheets = await getGoogleSheets();
+    const { data, error } = await supabaseAdmin
+        .from('contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Contacts!A2:I',
-    });
+    if (error) {
+        console.error('Error getting contacts from Supabase:', error);
+        return [];
+    }
 
-    const rows = response.data.values || [];
-
-    return rows.map((row: any[]) => ({
-        id: row[0] || '',
-        name: row[1] || '',
-        email: row[2] || '',
-        phone: row[3] || '',
-        subject: row[4] || '',
-        message: row[5] || '',
-        attachment: row[6] || '',
-        status: (row[7] === 'read' ? 'read' : 'unread') as 'unread' | 'read' | 'replied',
-        createdAt: row[8] || '',
-    })).sort((a: any, b: any) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    return (data || []).map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        subject: row.subject,
+        message: row.message,
+        attachment: row.attachment,
+        status: row.status as 'unread' | 'read' | 'replied',
+        createdAt: row.created_at,
+    }));
 }
 
 export async function updateContactStatus(id: string, status: string) {
-    const sheets = await getGoogleSheets();
+    const { data, error } = await supabaseAdmin
+        .from('contacts')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Contacts!A:A',
-    });
+    if (error) {
+        console.error('Error updating contact status in Supabase:', error);
+        throw error;
+    }
 
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
-
-    if (rowIndex === -1) return null;
-
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Contacts!H${rowIndex + 1}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[status]],
-        },
-    });
-
-    return { id, status };
+    return {
+        id: data.id,
+        status: data.status,
+    };
 }
 
 export async function deleteContact(id: string) {
-    const sheets = await getGoogleSheets();
+    const { error } = await supabaseAdmin
+        .from('contacts')
+        .delete()
+        .eq('id', id);
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Contacts!A:A',
-    });
-
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
-
-    if (rowIndex === -1) return false;
-
-    // Dynamically find the Sheet ID for 'Contacts'
-    const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-    const contactsSheet = metadata.data.sheets?.find(s => s.properties?.title === 'Contacts');
-    const sheetId = contactsSheet?.properties?.sheetId;
-
-    if (sheetId === undefined || sheetId === null) {
-        console.error("Contacts sheet not found during delete");
+    if (error) {
+        console.error('Error deleting contact in Supabase:', error);
         return false;
     }
-
-    await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-            requests: [{
-                deleteDimension: {
-                    range: {
-                        sheetId: sheetId,
-                        dimension: 'ROWS',
-                        startIndex: rowIndex,
-                        endIndex: rowIndex + 1,
-                    },
-                },
-            }],
-        },
-    });
 
     return true;
 }
@@ -192,162 +148,97 @@ export async function deleteContact(id: string) {
 // ==================== PROJECTS ====================
 
 export async function createProject(project: any) {
-    const sheets = await getGoogleSheets();
-    const id = `project_${Date.now()}`;
+    const id = project.id || `project_${Date.now()}`;
     const createdAt = new Date().toISOString();
 
-    // Map frontend field names to backend expectations
     const technologies = project.techStack || project.technologies || [];
     const thumbnail = project.thumbnail || project.image || '';
 
-    await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A:V',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[
-                id,
-                project.title,
-                project.slug,
-                project.description,
-                project.longDescription || '',
-                Array.isArray(project.category) ? project.category.join(',') : project.category,
-                Array.isArray(technologies) ? technologies.join(',') : technologies,
-                thumbnail,
-                project.demoUrl || '',
-                project.githubUrl || '',
-                project.featured ? 'TRUE' : 'FALSE',
-                createdAt,
-                // New Fields
-                Array.isArray(project.features) ? project.features.join('|') : '',
-                Array.isArray(project.screenshots) ? project.screenshots.join(',') : '',
-                JSON.stringify(project.documents || []),
-                project.videoUrl || '',
-                project.appStoreUrl || '',
-                project.playStoreUrl || '',
-                project.apkUrl || '',
-                project.testFlightUrl || '',
-                project.demoType || 'none',
-                project.status || 'live',
-            ]],
-        },
-    });
+    const { data, error } = await supabaseAdmin
+        .from('projects')
+        .insert({
+            id,
+            title: project.title,
+            slug: project.slug,
+            description: project.description,
+            long_description: project.longDescription || '',
+            category: Array.isArray(project.category) ? project.category : (project.category ? String(project.category).split(',') : []),
+            tech_stack: technologies,
+            image: thumbnail,
+            thumbnail: thumbnail,
+            demo_url: project.demoUrl || '',
+            github_url: project.githubUrl || '',
+            featured: project.featured === true || project.featured === 'TRUE',
+            created_at: createdAt,
+            updated_at: createdAt,
+            features: Array.isArray(project.features) ? project.features : (project.features ? project.features.split('|') : []),
+            screenshots: Array.isArray(project.screenshots) ? project.screenshots : (project.screenshots ? project.screenshots.split(',') : []),
+            documents: Array.isArray(project.documents) ? project.documents : [],
+            video_url: project.videoUrl || '',
+            app_store_url: project.appStoreUrl || '',
+            play_store_url: project.playStoreUrl || '',
+            apk_url: project.apkUrl || '',
+            test_flight_url: project.testFlightUrl || '',
+            demo_type: project.demoType || 'none',
+            status: project.status || 'live',
+        })
+        .select()
+        .single();
 
-    return { id, ...project, createdAt };
+    if (error) {
+        console.error('Error creating project in Supabase:', error);
+        throw error;
+    }
+
+    return mapProjectRow(data);
+}
+
+function mapProjectRow(p: any): Project {
+    return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        description: p.description,
+        longDescription: p.long_description,
+        category: p.category,
+        technologies: p.tech_stack || [],
+        techStack: p.tech_stack || [],
+        image: p.image,
+        thumbnail: p.thumbnail,
+        demoUrl: p.demo_url,
+        githubUrl: p.github_url,
+        featured: p.featured,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
+        features: p.features || [],
+        screenshots: p.screenshots || [],
+        documents: p.documents || [],
+        videoUrl: p.video_url,
+        appStoreUrl: p.app_store_url,
+        playStoreUrl: p.play_store_url,
+        apkUrl: p.apk_url,
+        testFlightUrl: p.test_flight_url,
+        demoType: p.demo_type,
+        status: p.status,
+        views: p.views || 0,
+    };
 }
 
 export async function getAllProjects(): Promise<Project[]> {
     try {
-        const sheets = await getGoogleSheets();
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Projects!A2:V',
-        });
+        if (error) throw error;
 
-        const rows = response.data.values || [];
-        console.log(`getAllProjects: Found ${rows.length} rows in sheet`);
-
-        const projects = rows.map((row: any[], index: number) => {
-            try {
-                // Defensive check if row is basic array
-                if (!Array.isArray(row)) {
-                    throw new Error('Row is not an array');
-                }
-
-                // Safely convert values to string if they are numbers/null
-                const safeString = (val: any) => (val === null || val === undefined) ? '' : String(val);
-
-                const technologies = safeString(row[6]).split(',').map((t: string) => t.trim()).filter(Boolean) || [];
-                return {
-                    id: safeString(row[0]),
-                    title: safeString(row[1]),
-                    slug: safeString(row[2]).trim(),
-                    description: safeString(row[3]),
-                    longDescription: safeString(row[4]),
-                    category: (safeString(row[5]).includes(',') ? safeString(row[5]).split(',').map(c => c.trim()) : safeString(row[5])) as ProjectCategory | ProjectCategory[],
-                    technologies,
-                    techStack: technologies,
-                    image: safeString(row[7]),
-                    thumbnail: safeString(row[7]),
-                    demoUrl: safeString(row[8]),
-                    githubUrl: safeString(row[9]),
-                    featured: safeString(row[10]).toUpperCase() === 'TRUE',
-                    createdAt: safeString(row[11]),
-                    updatedAt: safeString(row[11]),
-
-                    // New Fields Parsing
-                    features: safeString(row[12]) ? safeString(row[12]).split('|').map(f => f.trim()) : [],
-                    screenshots: safeString(row[13]) ? safeString(row[13]).split(',').map(s => s.trim()) : [],
-                    documents: (() => {
-                        try {
-                            const raw = safeString(row[14]);
-                            if (!raw) return [];
-                            // Handle simple URL case (if user pasted raw URL)
-                            if (raw.startsWith('http') && !raw.startsWith('[')) {
-                                return [{ name: 'Document', url: raw, previewUrl: '' }];
-                            }
-                            // Handle JSON format
-                            return JSON.parse(raw);
-                        } catch (e) {
-                            console.warn('Failed to parse documents:', row[14]);
-                            return [];
-                        }
-                    })(),
-                    videoUrl: safeString(row[15]),
-                    appStoreUrl: safeString(row[16]),
-                    playStoreUrl: safeString(row[17]),
-                    apkUrl: safeString(row[18]),
-                    testFlightUrl: safeString(row[19]),
-                    demoType: (safeString(row[20]) || 'none') as Project['demoType'],
-                    status: (safeString(row[21]) || 'live') as Project['status'],
-
-                    // Additional fields
-                    views: 0,
-                } as Project;
-            } catch (parseError) {
-                console.error(`Error parsing project at row ${index + 2}:`, parseError);
-                // Return a minimal project object to avoid breaking the entire list
-                return {
-                    id: row && row[0] ? String(row[0]) : `error_${index}`,
-                    title: row && row[1] ? String(row[1]) : 'Error loading project',
-                    slug: row && row[2] ? String(row[2]).trim() : `error-${index}`,
-                    description: 'Error parsing project data',
-                    longDescription: '',
-                    category: [],
-                    technologies: [],
-                    techStack: [],
-                    image: '',
-                    thumbnail: '',
-                    demoUrl: '',
-                    githubUrl: '',
-                    featured: false,
-                    createdAt: '',
-                    updatedAt: '',
-                    features: [],
-                    screenshots: [],
-                    documents: [],
-                    videoUrl: '',
-                    appStoreUrl: '',
-                    playStoreUrl: '',
-                    apkUrl: '',
-                    testFlightUrl: '',
-                    demoType: 'none',
-                    status: 'live',
-                    views: 0,
-                } as Project;
-            }
-        });
-
-        console.log(`getAllProjects: Successfully parsed ${projects.length} projects`);
-        return projects.sort((a: any, b: any) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
-        });
+        return (data || []).map(mapProjectRow);
     } catch (error) {
-        console.error('Error in getAllProjects (Google API), trying local fallback:', error);
-        return getLocalProjects();
+        console.error('Error getting projects from Supabase:', error);
+        const local = await getLocalProjects();
+        if (local.length > 0) return local;
+        return [];
     }
 }
 
@@ -368,151 +259,72 @@ export async function getFeaturedProjects() {
 }
 
 export async function updateProject(id: string, updates: any) {
-    const sheets = await getGoogleSheets();
+    const updatedAt = new Date().toISOString();
 
-    // 1. Find the row index first
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Projects!A:A',
-    });
-
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
-
-    if (rowIndex === -1) return null;
-
-    // 2. Fetch the EXISTING full row data to ensure we don't overwrite with missing defaults
-    const fullRowResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Projects!A${rowIndex + 1}:V${rowIndex + 1}`,
-    });
-
-    const existingRow = fullRowResponse.data.values?.[0] || [];
-
-    // 3. Helper to safe-parse existing JSON
-    const parseJSON = (str: string, fallback: any) => {
-        try { return str ? JSON.parse(str) : fallback; } catch { return fallback; }
+    // Explicitly mapping supported fields to snake_case
+    const payload: any = {
+        updated_at: updatedAt
     };
 
-    // 4. Extract existing values for merging
-    // Note: This mapping MUST match the read sequence in getAllProjects
-    const existingData = {
-        title: existingRow[1],
-        slug: existingRow[2],
-        description: existingRow[3],
-        longDescription: existingRow[4],
-        category: existingRow[5]?.split(','),
-        techStack: existingRow[6]?.split(','),
-        thumbnail: existingRow[7],
-        demoUrl: existingRow[8],
-        githubUrl: existingRow[9],
-        featured: existingRow[10] === 'TRUE',
-        createdAt: existingRow[11],
-        features: existingRow[12]?.split('|'),
-        screenshots: existingRow[13]?.split(','),
-        documents: parseJSON(existingRow[14], []),
-        videoUrl: existingRow[15],
-        appStoreUrl: existingRow[16],
-        playStoreUrl: existingRow[17],
-        apkUrl: existingRow[18],
-        testFlightUrl: existingRow[19],
-        demoType: existingRow[20],
-        status: existingRow[21],
-    };
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.slug !== undefined) payload.slug = updates.slug;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.longDescription !== undefined) payload.long_description = updates.longDescription;
+    if (updates.category !== undefined) {
+        payload.category = Array.isArray(updates.category) ? updates.category : (updates.category ? String(updates.category).split(',') : []);
+    }
+    const tech = updates.techStack || updates.technologies;
+    if (tech !== undefined) payload.tech_stack = tech;
 
-    // 5. Merge Updates: Prefer 'updates', fallback to 'existingData'
-    // For arrays/objects, we trust the 'updates' if provided, otherwise keep existing.
-    // We explicitly handle aliasing here.
-    const merged = {
-        ...existingData,
-        ...updates,
-        // Handle aliases: Frontend sends techStack/thumbnail, so use those if present
-        techStack: updates.techStack || updates.technologies || existingData.techStack || [],
-        thumbnail: updates.thumbnail || updates.image || existingData.thumbnail || '',
-    };
+    const image = updates.thumbnail || updates.image;
+    if (image !== undefined) {
+        payload.image = image;
+        payload.thumbnail = image;
+    }
 
-    // 6. Constuct the Write Row
-    const updatedRow = [
-        id, // 0: ID (Immutable)
-        merged.title, // 1
-        merged.slug, // 2
-        merged.description, // 3
-        merged.longDescription || '', // 4
-        Array.isArray(merged.category) ? merged.category.join(',') : merged.category, // 5
-        Array.isArray(merged.techStack) ? merged.techStack.join(',') : merged.techStack, // 6
-        merged.thumbnail, // 7
-        merged.demoUrl || '', // 8
-        merged.githubUrl || '', // 9
-        merged.featured ? 'TRUE' : 'FALSE', // 10
-        merged.createdAt, // 11 (Immutable)
-        Array.isArray(merged.features) ? merged.features.join('|') : '', // 12
-        Array.isArray(merged.screenshots) ? merged.screenshots.join(',') : '', // 13
-        JSON.stringify(merged.documents || []), // 14
-        merged.videoUrl || '', // 15
-        merged.appStoreUrl || '', // 16
-        merged.playStoreUrl || '', // 17
-        merged.apkUrl || '', // 18
-        merged.testFlightUrl || '', // 19
-        merged.demoType || 'none', // 20
-        merged.status || 'live', // 21
-    ];
+    if (updates.demoUrl !== undefined) payload.demo_url = updates.demoUrl;
+    if (updates.githubUrl !== undefined) payload.github_url = updates.githubUrl;
+    if (updates.featured !== undefined) payload.featured = updates.featured === true || updates.featured === 'TRUE';
+    if (updates.features !== undefined) {
+        payload.features = Array.isArray(updates.features) ? updates.features : (updates.features ? String(updates.features).split('|') : []);
+    }
+    if (updates.screenshots !== undefined) {
+        payload.screenshots = Array.isArray(updates.screenshots) ? updates.screenshots : (updates.screenshots ? String(updates.screenshots).split(',') : []);
+    }
+    if (updates.documents !== undefined) payload.documents = updates.documents;
+    if (updates.videoUrl !== undefined) payload.video_url = updates.videoUrl;
+    if (updates.appStoreUrl !== undefined) payload.app_store_url = updates.appStoreUrl;
+    if (updates.playStoreUrl !== undefined) payload.play_store_url = updates.playStoreUrl;
+    if (updates.apkUrl !== undefined) payload.apk_url = updates.apkUrl;
+    if (updates.testFlightUrl !== undefined) payload.test_flight_url = updates.testFlightUrl;
+    if (updates.demoType !== undefined) payload.demo_type = updates.demoType;
+    if (updates.status !== undefined) payload.status = updates.status;
 
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Projects!A${rowIndex + 1}:V${rowIndex + 1}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [updatedRow],
-        },
-    });
+    const { data, error } = await supabaseAdmin
+        .from('projects')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
 
-    return { id, ...merged };
+    if (error) {
+        console.error('Error updating project in Supabase:', error);
+        throw error;
+    }
+
+    return mapProjectRow(data);
 }
 
 export async function deleteProject(id: string) {
     try {
-        const sheets = await getGoogleSheets();
+        const { error } = await supabaseAdmin
+            .from('projects')
+            .delete()
+            .eq('id', id);
 
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Projects!A:A',
-        });
+        if (error) throw error;
 
-        const rows = response.data.values || [];
-        const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
-
-        if (rowIndex === -1) {
-            console.error(`Project with ID ${id} not found in sheet`);
-            throw new Error('Project not found');
-        }
-
-        // Dynamically find the Sheet ID for 'Projects'
-        const metadata = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-        const projectsSheet = metadata.data.sheets?.find(s => s.properties?.title === 'Projects');
-
-        if (!projectsSheet?.properties?.sheetId && projectsSheet?.properties?.sheetId !== 0) {
-            throw new Error("Projects sheet not found");
-        }
-
-        const sheetId = projectsSheet.properties.sheetId;
-
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: SPREADSHEET_ID,
-            requestBody: {
-                requests: [{
-                    deleteDimension: {
-                        range: {
-                            sheetId: sheetId,
-                            dimension: 'ROWS',
-                            startIndex: rowIndex,
-                            endIndex: rowIndex + 1,
-                        },
-                    },
-                }],
-            },
-        });
-
-        console.log(`Successfully deleted project ${id} from row ${rowIndex}`);
+        console.log(`Successfully deleted project ${id} from Supabase`);
         return true;
     } catch (error) {
         console.error('Error in deleteProject:', error);
@@ -536,25 +348,21 @@ export async function getPageContent(slug: string) {
         return getContactPage();
     }
 
-    const sheets = await getGoogleSheets();
-
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Pages!A2:C',
-        });
+        const { data, error } = await supabase
+            .from('pages')
+            .select('*')
+            .eq('slug', slug)
+            .single();
 
-        const rows = response.data.values || [];
-        const row = rows.find((r: any[]) => r[0] === slug);
-
-        if (!row) {
+        if (error || !data) {
             return getDefaultPageContent(slug);
         }
 
         return {
-            slug: row[0],
-            content: JSON.parse(row[1] || '{}'),
-            updatedAt: row[2],
+            slug: data.slug,
+            content: data.content,
+            updatedAt: data.updated_at,
         };
     } catch (error) {
         console.error('Error getting page content:', error);
@@ -563,43 +371,35 @@ export async function getPageContent(slug: string) {
 }
 
 async function getAboutPage() {
-    const sheets = await getGoogleSheets();
     try {
-        // Try to get data from the "About" sheet
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'About!A2:L2', // Read specific columns
-        });
+        const { data, error } = await supabase
+            .from('about_page')
+            .select('*')
+            .eq('slug', 'about')
+            .maybeSingle();
 
-        const row = response.data.values?.[0];
-
-        if (!row) {
+        if (error || !data) {
             return getDefaultPageContent('about');
         }
 
-        // Map columns to content object
-        const content = {
-            slug: 'about',
-            heroBadge: row[1] || '',
-            heroTitle: row[2] || '',
-            heroSubtitle1: row[3] || '',
-            profileImage: row[4] || '',
-            experienceYears: row[5] || '',
-            skillsTitle: row[6] || '',
-            skillsSubtitle: row[7] || '',
-            skills: row[8] ? JSON.parse(row[8]) : [],
-            certificationsTitle: row[9] || '',
-            certifications: row[10] ? row[10].split(',').map((s: string) => s.trim()) : [],
-            updatedAt: row[11] || new Date().toISOString(),
-        };
-
         return {
             slug: 'about',
-            content: content,
-            updatedAt: content.updatedAt,
+            content: {
+                heroBadge: data.hero_badge || '',
+                heroTitle: data.hero_title || '',
+                heroSubtitle1: data.hero_subtitle1 || '',
+                profileImage: data.profile_image || '',
+                experienceYears: data.experience_years || '',
+                skillsTitle: data.skills_title || '',
+                skillsSubtitle: data.skills_subtitle || '',
+                skills: data.skills || [],
+                certificationsTitle: data.certifications_title || '',
+                certifications: data.certifications || [],
+            },
+            updatedAt: data.updated_at,
         };
     } catch (error) {
-        console.warn('Error getting About page from Google (trying local fallback):', error);
+        console.warn('Error getting About page from Supabase (trying local fallback):', error);
         const local = await getLocalPageContent('about');
         if (local) return local;
         return getDefaultPageContent('about');
@@ -607,40 +407,34 @@ async function getAboutPage() {
 }
 
 async function getWhatIOfferPage() {
-    const sheets = await getGoogleSheets();
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'WhatIOffer!A2:K2',
-        });
+        const { data, error } = await supabase
+            .from('what_i_offer_page')
+            .select('*')
+            .eq('slug', 'what-i-offer')
+            .maybeSingle();
 
-        const row = response.data.values?.[0];
-
-        if (!row) {
+        if (error || !data) {
             return getDefaultPageContent('what-i-offer');
         }
 
-        const content = {
-            slug: 'what-i-offer',
-            heroTitle: row[1] || '',
-            heroSubtitle: row[2] || '',
-            services: row[3] ? JSON.parse(row[3]) : [],
-            whyChooseMe: row[4] ? JSON.parse(row[4]) : [],
-            showcaseTitle: row[5] || '',
-            showcaseSubtitle: row[6] || '',
-            showcaseItems: row[7] ? JSON.parse(row[7]) : [],
-            ctaTitle: row[8] || '',
-            ctaDescription: row[9] || '',
-            updatedAt: row[10] || new Date().toISOString(),
-        };
-
         return {
             slug: 'what-i-offer',
-            content: content,
-            updatedAt: content.updatedAt,
+            content: {
+                heroTitle: data.hero_title || '',
+                heroSubtitle: data.hero_subtitle || '',
+                services: data.services || [],
+                whyChooseMe: data.why_choose_me || [],
+                showcaseTitle: data.showcase_title || '',
+                showcaseSubtitle: data.showcase_subtitle || '',
+                showcaseItems: data.showcase_items || [],
+                ctaTitle: data.cta_title || '',
+                ctaDescription: data.cta_description || '',
+            },
+            updatedAt: data.updated_at,
         };
     } catch (error) {
-        console.warn('Error getting WhatIOffer page from Google (trying local fallback):', error);
+        console.warn('Error getting WhatIOffer page from Supabase (trying local fallback):', error);
         const local = await getLocalPageContent('what-i-offer');
         if (local) return local;
         return getDefaultPageContent('what-i-offer');
@@ -702,470 +496,241 @@ export async function processPageUpdate(slug: string, content: any) {
     const normalizedSlug = slug.toString().trim().toLowerCase();
 
     if (normalizedSlug === 'home') {
-        console.log("Routing to Home Page logic for slug:", normalizedSlug);
-        console.log("Content received:", JSON.stringify(content));
         return updateHomePage(content);
     }
     if (normalizedSlug === 'contact') {
-        console.log("Routing to Contact Page logic");
         return updateContactPage(content);
     }
     if (normalizedSlug === 'about') {
-        console.log("Routing to About Page logic (Primary Check)");
         return updateAboutPage(content);
     }
     if (normalizedSlug === 'what-i-offer') {
-        console.log("Routing to What I Offer Page logic");
         return updateWhatIOfferPage(content);
     }
 
-    const sheets = await getGoogleSheets();
-
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Pages!A:A',
-    });
-
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === slug);
     const updatedAt = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+        .from('pages')
+        .upsert({
+            slug,
+            content,
+            updated_at: updatedAt,
+        })
+        .select()
+        .single();
 
-    // SAFETY FALLBACK: If we somehow found the 'about' row in the old sheet, redirect!
-    // This catches cases where slug might be "about" but the top check failed for some reason
-    if (normalizedSlug === 'home') {
-        throw new Error("DEBUG TRAP: OLD LOGIC REACHED for Home. The server IS running the new code.");
-    }
-    if (normalizedSlug === 'about') {
-        throw new Error("DEBUG TRAP: OLD LOGIC REACHED. The server IS running the new code, but the logic fell through.");
-    }
-    if (normalizedSlug === 'what-i-offer') {
-        throw new Error("DEBUG TRAP: OLD LOGIC REACHED for WhatIOffer. The server IS running the new code.");
-    }
-
-    if (rowIndex === -1) {
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Pages!A:C',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[slug, JSON.stringify(content), updatedAt]],
-            },
-        });
-    } else {
-        await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `Pages!B${rowIndex + 1}:C${rowIndex + 1}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[JSON.stringify(content), updatedAt]],
-            },
-        });
+    if (error) {
+        console.error('Error updating page in Supabase:', error);
+        throw error;
     }
 
-    return { slug, content, updatedAt };
+    return data;
 }
 
 async function updateAboutPage(content: any) {
-    const sheets = await getGoogleSheets();
     const updatedAt = new Date().toISOString();
 
-    // Ensure "About" sheet exists
-    await ensureAboutSheetExists(sheets);
+    const { data, error } = await supabaseAdmin
+        .from('about_page')
+        .upsert({
+            slug: 'about',
+            hero_badge: content.heroBadge || '',
+            hero_title: content.heroTitle || '',
+            hero_subtitle1: content.heroSubtitle1 || '',
+            profile_image: content.profileImage || '',
+            experience_years: content.experienceYears || '',
+            skills_title: content.skillsTitle || '',
+            skills_subtitle: content.skillsSubtitle || '',
+            skills: content.skills || [],
+            certifications_title: content.certificationsTitle || '',
+            certifications: Array.isArray(content.certifications) ? content.certifications : (content.certifications ? content.certifications.split(',') : []),
+            updated_at: updatedAt,
+        })
+        .select()
+        .single();
 
-    // Update headers (idempotent-ish)
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'About!A1:L1',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[
-                'slug',
-                'heroBadge',
-                'heroTitle',
-                'heroSubtitle1',
-                'profileImage',
-                'experienceYears',
-                'skillsTitle',
-                'skillsSubtitle',
-                'skills',
-                'certificationsTitle',
-                'certifications',
-                'updatedAt'
-            ]]
-        }
-    });
-
-    // Prepare row data strictly mapping to headers
-    const rowData = [
-        'about', // A: slug
-        content.heroBadge || '', // B
-        content.heroTitle || '', // C
-        content.heroSubtitle1 || '', // D
-        content.profileImage || '', // E
-        content.experienceYears || '', // F
-        content.skillsTitle || '', // G
-        content.skillsSubtitle || '', // H
-        JSON.stringify(content.skills || []), // I: stored as JSON array
-        content.certificationsTitle || '', // J
-        Array.isArray(content.certifications) ? content.certifications.join(',') : (content.certifications || ''), // K: CSV
-        updatedAt // L
-    ];
-
-    // Always update Row 2 (single row for 'About' page)
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'About!A2:L2',
-        valueInputOption: 'USER_ENTERED', // Allow formula parsing if needed, but mainly for type coercion
-        requestBody: {
-            values: [rowData],
-        },
-    });
+    if (error) {
+        console.error('Error updating About page in Supabase:', error);
+        throw error;
+    }
 
     return { slug: 'about', content, updatedAt };
 }
 
-async function ensureAboutSheetExists(sheets: any) {
-    try {
-        const spreadsheet = await sheets.spreadsheets.get({
-            spreadsheetId: SPREADSHEET_ID,
-        });
 
-        const sheetExists = spreadsheet.data.sheets?.some(
-            (s: any) => s.properties?.title === 'About'
-        );
-
-        if (!sheetExists) {
-            console.log("Creating 'About' sheet...");
-            await sheets.spreadsheets.batchUpdate({
-                spreadsheetId: SPREADSHEET_ID,
-                requestBody: {
-                    requests: [{
-                        addSheet: {
-                            properties: {
-                                title: 'About',
-                                gridProperties: {
-                                    frozenRowCount: 1,
-                                }
-                            }
-                        }
-                    }]
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error ensuring About sheet exists:', error);
-        // Don't throw, try to proceed in case it's a permission issue or race condition
-    }
-}
 
 async function updateWhatIOfferPage(content: any) {
-    const sheets = await getGoogleSheets();
     const updatedAt = new Date().toISOString();
 
-    await ensureWhatIOfferSheetExists(sheets);
+    const { data, error } = await supabaseAdmin
+        .from('what_i_offer_page')
+        .upsert({
+            slug: 'what-i-offer',
+            hero_title: content.heroTitle || '',
+            hero_subtitle: content.heroSubtitle || '',
+            services: content.services || [],
+            why_choose_me: content.whyChooseMe || [],
+            showcase_title: content.showcaseTitle || '',
+            showcase_subtitle: content.showcaseSubtitle || '',
+            showcase_items: content.showcaseItems || [],
+            cta_title: content.ctaTitle || '',
+            cta_description: content.ctaDescription || '',
+            updated_at: updatedAt
+        })
+        .select()
+        .single();
 
-    // Update headers
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'WhatIOffer!A1:K1',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[
-                'slug', 'heroTitle', 'heroSubtitle', 'services', 'whyChooseMe',
-                'showcaseTitle', 'showcaseSubtitle', 'showcaseItems', 'ctaTitle', 'ctaDescription', 'updatedAt'
-            ]]
-        }
-    });
-
-    const rowData = [
-        'what-i-offer',
-        content.heroTitle || '',
-        content.heroSubtitle || '',
-        JSON.stringify(content.services || []),
-        JSON.stringify(content.whyChooseMe || []),
-        content.showcaseTitle || '',
-        content.showcaseSubtitle || '',
-        JSON.stringify(content.showcaseItems || []),
-        content.ctaTitle || '',
-        content.ctaDescription || '',
-        updatedAt
-    ];
-
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'WhatIOffer!A2:K2',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [rowData],
-        },
-    });
+    if (error) {
+        console.error('Error updating WhatIOffer page in Supabase:', error);
+        throw error;
+    }
 
     return { slug: 'what-i-offer', content, updatedAt };
 }
 
+async function updateHomePage(content: any) {
+    const updatedAt = new Date().toISOString();
 
+    const { data, error } = await supabaseAdmin
+        .from('home_page')
+        .upsert({
+            slug: 'home',
+            hero_badge: content.heroBadge || '',
+            hero_title: content.heroTitle || '',
+            hero_subtitle: content.heroSubtitle || '',
+            hero_stats: content.heroStats || [],
+            featured_title: content.featuredTitle || '',
+            featured_description: content.featuredDescription || '',
+            cta_title: content.ctaTitle || '',
+            cta_description: content.ctaDescription || '',
+            updated_at: updatedAt
+        })
+        .select()
+        .single();
 
-async function ensureHomeSheetExists(sheets: any) {
-    try {
-        await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Home!A1',
-        });
-    } catch (error) {
-        console.log("Creating 'Home' sheet...");
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: SPREADSHEET_ID,
-            requestBody: {
-                requests: [{
-                    addSheet: {
-                        properties: { title: 'Home' }
-                    }
-                }]
-            }
-        });
-
-        // Initialize Header Row
-        await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Home!A1:J1',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [['slug', 'heroBadge', 'heroTitle', 'heroSubtitle', 'heroStats', 'featuredTitle', 'featuredDescription', 'ctaTitle', 'ctaDescription', 'updatedAt']]
-            }
-        });
+    if (error) {
+        console.error('Error updating Home page in Supabase:', error);
+        throw error;
     }
+
+    return { slug: 'home', content, updatedAt };
 }
 
-async function updateHomePage(content: any) {
-    console.log("Entering updateHomePage...");
-    const sheets = await getGoogleSheets();
-    await ensureHomeSheetExists(sheets);
-    await ensureContactSheetExists(sheets);
-    console.log("Home sheet ensured.");
+export async function updateContactPage(content: any) {
+    const updatedAt = new Date().toISOString();
 
-    const rowsReference = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Home!A:A',
-    });
+    const { data, error } = await supabaseAdmin
+        .from('contact_page')
+        .upsert({
+            slug: 'contact',
+            header_title: content.headerTitle || '',
+            header_subtitle: content.headerSubtitle || '',
+            email: content.email || '',
+            phone: content.phone || '',
+            whatsapp: content.whatsapp || '',
+            linkedin: content.linkedin || '',
+            instagram: content.instagram || '',
+            response_time_title: content.responseTimeTitle || '',
+            response_time_description: content.responseTimeDescription || '',
+            updated_at: updatedAt
+        })
+        .select()
+        .single();
 
-    const rows = rowsReference.data.values || [];
-    // We only have one row for home, so we can just update row 2
-    let rowIndex = 1;
+    if (error) {
+        console.error('Error updating Contact page in Supabase:', error);
+        throw error;
+    }
 
-    // A: slug, B: heroBadge, C: heroTitle, D: heroSubtitle, E: heroStats (JSON)
-    // F: featuredTitle, G: featuredDescription, H: ctaTitle, I: ctaDescription, J: updatedAt
-    const rowData = [
-        'home',
-        content.heroBadge || '',
-        content.heroTitle || '',
-        content.heroSubtitle || '',
-        JSON.stringify(content.heroStats || []),
-        content.featuredTitle || '',
-        content.featuredDescription || '',
-        content.ctaTitle || '',
-        content.ctaDescription || '',
-        new Date().toISOString()
-    ];
-
-    console.log("Updating Home sheet with data:", rowData);
-
-    const res = await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Home!A2:J2`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: [rowData] }
-    });
-    console.log("Home sheet update response status:", res.status);
-
-    return { slug: 'home', content, updatedAt: rowData[7] };
+    return { success: true, timestamp: updatedAt };
 }
 
 async function getHomePage() {
-    const sheets = await getGoogleSheets();
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Home!A2:J2',
-        });
+        const { data, error } = await supabase
+            .from('home_page')
+            .select('*')
+            .eq('slug', 'home')
+            .maybeSingle();
 
-        const row = response.data.values?.[0];
+        if (error || !data) return getDefaultPageContent('home');
 
-        if (!row) return getDefaultPageContent('home');
-
-        // Parse Columns back to Object
         return {
             slug: 'home',
             content: {
-                heroBadge: row[1] || '',
-                heroTitle: row[2] || '',
-                heroSubtitle: row[3] || '',
-                heroStats: (() => {
-                    try { return row[4] ? JSON.parse(row[4]) : [] } catch { return [] }
-                })(),
-                featuredTitle: row[5] || '',
-                featuredDescription: row[6] || '',
-                ctaTitle: row[7] || '',
-                ctaDescription: row[8] || ''
+                heroBadge: data.hero_badge || '',
+                heroTitle: data.hero_title || '',
+                heroSubtitle: data.hero_subtitle || '',
+                heroStats: data.hero_stats || [],
+                featuredTitle: data.featured_title || '',
+                featuredDescription: data.featured_description || '',
+                ctaTitle: data.cta_title || '',
+                ctaDescription: data.cta_description || '',
             },
-            updatedAt: row[9] || ''
+            updatedAt: data.updated_at,
         };
     } catch (e) {
-        console.warn("Home page Google fetch failed (trying local fallback)");
+        console.warn("Home page Supabase fetch failed (trying local fallback)");
         const local = await getLocalPageContent('home');
         if (local) return local;
         return getDefaultPageContent('home');
     }
 }
 
-async function ensureContactSheetExists(sheets: any) {
-    const spreadsheetId = SPREADSHEET_ID;
-    const metadata = await sheets.spreadsheets.get({ spreadsheetId });
-    const sheetExists = metadata.data.sheets?.some((s: any) => s.properties?.title === 'Contact');
-
-    if (!sheetExists) {
-        console.log("Creating Contact sheet...");
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId,
-            requestBody: {
-                requests: [{ addSheet: { properties: { title: 'Contact' } } }]
-            }
-        });
-
-        // Initialize Header Row
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: 'Contact!A1:K1',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                // A: slug, B: headerTitle, C: headerSubtitle, D: email, E: phone, F: whatsapp, G: linkedin, H: instagram, I: responseTimeTitle, J: responseTimeDescription, K: updatedAt
-                values: [['slug', 'headerTitle', 'headerSubtitle', 'email', 'phone', 'whatsapp', 'linkedin', 'instagram', 'responseTimeTitle', 'responseTimeDescription', 'updatedAt']]
-            }
-        });
-    }
-}
-
-export async function updateContactPage(content: any) {
-    const sheets = await getGoogleSheets();
-    await ensureContactSheetExists(sheets);
-
-    // Format Data for Columns
-    // A: slug, B: headerTitle, C: headerSubtitle, D: email, E: phone, F: whatsapp, G: linkedin, H: instagram, I: responseTimeTitle, J: responseTimeDescription, K: updatedAt
-    const rowData = [
-        'contact',
-        content.headerTitle || '',
-        content.headerSubtitle || '',
-        content.email || '',
-        content.phone || '',
-        content.whatsapp || '',
-        content.linkedin || '',
-        content.instagram || '',
-        content.responseTimeTitle || '',
-        content.responseTimeDescription || '',
-        new Date().toISOString()
-    ];
-
-    console.log("Updating Contact sheet with data:", rowData);
-
-    const res = await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `Contact!A2:K2`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: [rowData] }
-    });
-
-    console.log("Contact Page Updated. Response:", res.status);
-
-    return { success: true, timestamp: new Date().toISOString() };
-}
+// Helper functions removed as they are no longer needed for Supabase migration
+// (ensureAboutSheetExists, ensureWhatIOfferSheetExists, ensureHomeSheetExists, ensureContactSheetExists)
 
 export async function getContactPage() {
-    const sheets = await getGoogleSheets();
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Contact!A2:K2',
-        });
+        const { data, error } = await supabase
+            .from('contact_page')
+            .select('*')
+            .eq('slug', 'contact')
+            .maybeSingle();
 
-        const row = response.data.values?.[0];
+        if (error || !data) return getDefaultPageContent('contact');
 
-        if (!row) return getDefaultPageContent('contact');
-
-        // Parse Columns back to Object
         return {
             slug: 'contact',
             content: {
-                headerTitle: row[1] || '',
-                headerSubtitle: row[2] || '',
-                email: row[3] || '',
-                phone: row[4] || '',
-                whatsapp: row[5] || '',
-                linkedin: row[6] || '',
-                instagram: row[7] || '',
-                responseTimeTitle: row[8] || '',
-                responseTimeDescription: row[9] || ''
+                headerTitle: data.header_title || '',
+                headerSubtitle: data.header_subtitle || '',
+                email: data.email || '',
+                phone: data.phone || '',
+                whatsapp: data.whatsapp || '',
+                linkedin: data.linkedin || '',
+                instagram: data.instagram || '',
+                responseTimeTitle: data.response_time_title || '',
+                responseTimeDescription: data.response_time_description || '',
             },
-            updatedAt: row[10] || ''
+            updatedAt: data.updated_at,
         };
     } catch (e) {
-        console.warn("Contact page Google fetch failed (trying local fallback)");
+        console.warn("Contact page Supabase fetch failed (trying local fallback)");
         const local = await getLocalPageContent('contact');
         if (local) return local;
         return getDefaultPageContent('contact');
     }
 }
 
-async function ensureWhatIOfferSheetExists(sheets: any) {
-    try {
-        const spreadsheet = await sheets.spreadsheets.get({
-            spreadsheetId: SPREADSHEET_ID,
-        });
-
-        const sheetExists = spreadsheet.data.sheets?.some(
-            (s: any) => s.properties?.title === 'WhatIOffer'
-        );
-
-        if (!sheetExists) {
-            console.log("Creating 'WhatIOffer' sheet...");
-            await sheets.spreadsheets.batchUpdate({
-                spreadsheetId: SPREADSHEET_ID,
-                requestBody: {
-                    requests: [{
-                        addSheet: {
-                            properties: {
-                                title: 'WhatIOffer',
-                                gridProperties: { frozenRowCount: 1 }
-                            }
-                        }
-                    }]
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error ensuring WhatIOffer sheet exists:', error);
-    }
-}
+// Removed ensureWhatIOfferSheetExists
 
 // ==================== SETTINGS ====================
 
 export async function getSetting(key: string) {
-    const sheets = await getGoogleSheets();
-
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Settings!A2:D',
-        });
+        const { data, error } = await supabase
+            .from('settings')
+            .select('*')
+            .eq('key', key)
+            .maybeSingle();
 
-        const rows = response.data.values || [];
-        const row = rows.find((r: any[]) => r[0] === key);
-
-        if (!row) return null;
+        if (error) return null;
+        if (!data) return null; // maybeSingle returns null for data if no record found, without an error
 
         return {
-            key: row[0],
-            value: row[1],
-            status: row[2] || 'active',
-            updatedAt: row[3],
+            ...data,
+            updatedAt: data.updated_at
         };
     } catch (error) {
         console.error('Error getting setting:', error);
@@ -1174,20 +739,20 @@ export async function getSetting(key: string) {
 }
 
 export async function getAllSettings() {
-    const sheets = await getGoogleSheets();
-
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Settings!A2:D',
-        });
+        const { data, error } = await supabase
+            .from('settings')
+            .select('*');
 
-        const rows = response.data.values || [];
+        if (error) throw error;
 
         const settings: Record<string, any> = {};
-        rows.forEach((row: any[]) => {
-            if (row[0]) {
-                settings[row[0]] = row[1];
+        (data || []).forEach(row => {
+            if (row.key) {
+                settings[row.key] = {
+                    ...row,
+                    updatedAt: row.updated_at
+                };
             }
         });
 
@@ -1199,38 +764,24 @@ export async function getAllSettings() {
 }
 
 export async function updateSetting(key: string, value: string, status: string = 'active') {
-    const sheets = await getGoogleSheets();
-
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'Settings!A:A',
-    });
-
-    const rows = response.data.values || [];
-    const rowIndex = rows.findIndex((row: any[]) => row[0] === key);
     const updatedAt = new Date().toISOString();
 
-    if (rowIndex === -1) {
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Settings!A:D',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[key, value, status, updatedAt]],
-            },
-        });
-    } else {
-        await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `Settings!B${rowIndex + 1}:D${rowIndex + 1}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[value, status, updatedAt]],
-            },
-        });
+    const { data, error } = await supabaseAdmin
+        .from('settings')
+        .upsert({
+            key,
+            value,
+            updated_at: updatedAt,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating setting in Supabase:', error);
+        throw error;
     }
 
-    return { key, value, status, updatedAt };
+    return data;
 }
 
 // Admin Password Management
