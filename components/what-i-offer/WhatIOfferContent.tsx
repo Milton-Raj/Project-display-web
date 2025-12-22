@@ -71,14 +71,14 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
     return (
         <div className="space-y-20 pb-20">
             {/* 1. Hero Section */}
-            <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
+            <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-8 pb-12">
                 {/* Background Elements */}
                 <div className="absolute inset-0 -z-10">
                     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse-glow" />
                     <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1s" }} />
                 </div>
 
-                <div className="container-custom text-center space-y-8">
+                <div className="container-custom text-center space-y-6">
                     <div className="inline-flex items-center space-x-2 glass px-4 py-2 rounded-full mb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <Sparkles className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium">Premium Services</span>
