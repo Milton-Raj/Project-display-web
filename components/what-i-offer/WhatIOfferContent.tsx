@@ -85,7 +85,7 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold max-w-4xl mx-auto leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                        {content.heroTitle || "I build software, train teams, and help job seekers"} <span className="gradient-text">{content.heroSubtitle || "upgrade their career."}</span>
+                        {content.heroTitle || "I build software, train teams, and help job seekers upgrade their career."}
                     </h1>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">

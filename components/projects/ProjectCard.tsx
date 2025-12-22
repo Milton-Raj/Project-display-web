@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -48,9 +48,9 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
                     {/* Featured Badge */}
                     {project.featured && (
                         <div className="absolute top-3 left-3 z-10">
-                            <Badge className="bg-yellow-500/90 hover:bg-yellow-500 text-black font-bold border-none shadow-lg backdrop-blur-md">
-                                Featured
-                            </Badge>
+                            <div className="bg-yellow-500/90 backdrop-blur-md rounded-full p-2 shadow-lg animate-pulse">
+                                <Star className="w-5 h-5 text-black fill-black" />
+                            </div>
                         </div>
                     )}
                 </div>
