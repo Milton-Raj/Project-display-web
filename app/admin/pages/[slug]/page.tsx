@@ -337,13 +337,98 @@ export default function PageEditor() {
                                                 placeholder="e.g., 5+"
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Profile Image URL</label>
-                                            <Input
-                                                value={formData.profileImage || ''}
-                                                onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
-                                                placeholder="https://..."
-                                            />
+                                        <div className="space-y-4">
+                                            <label className="text-sm font-medium">Profile Image</label>
+
+                                            {/* Image Preview */}
+                                            {formData.profileImage && (
+                                                <div className="relative w-full aspect-video max-w-md rounded-xl overflow-hidden border-2 border-white/10 shadow-lg group">
+                                                    <img
+                                                        src={formData.profileImage}
+                                                        alt="Profile"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setFormData({ ...formData, profileImage: "" });
+                                                            // Reset file input
+                                                            const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
+                                                            if (fileInput) fileInput.value = "";
+                                                        }}
+                                                        className="absolute top-2 right-2 p-2 rounded-full bg-destructive/90 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Remove image"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Upload Section */}
+                                            <div className="p-4 rounded-lg border border-dashed border-white/20 space-y-3">
+                                                <Input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+
+                                                        try {
+                                                            setIsUploading(true);
+                                                            const uploadFormData = new FormData();
+                                                            uploadFormData.append('file', file);
+
+                                                            const response = await fetch('/api/upload', {
+                                                                method: 'POST',
+                                                                body: uploadFormData,
+                                                            });
+
+                                                            if (!response.ok) {
+                                                                const errorData = await response.json();
+                                                                throw new Error(errorData.error || 'Upload failed');
+                                                            }
+
+                                                            const data = await response.json();
+                                                            setFormData({ ...formData, profileImage: data.url });
+
+                                                            toast({
+                                                                title: "Success",
+                                                                description: "Profile image uploaded successfully.",
+                                                            });
+                                                        } catch (error: any) {
+                                                            console.error("Upload failed:", error);
+                                                            toast({
+                                                                title: "Error Uploading Image",
+                                                                description: error.message || "Failed to upload image.",
+                                                                variant: "destructive",
+                                                            });
+                                                        } finally {
+                                                            setIsUploading(false);
+                                                        }
+                                                    }}
+                                                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                                />
+
+                                                {isUploading && (
+                                                    <p className="text-xs text-blue-400 animate-pulse font-medium">
+                                                        Uploading image... please wait.
+                                                    </p>
+                                                )}
+
+                                                {!formData.profileImage && (
+                                                    <>
+                                                        <div className="text-center text-xs text-muted-foreground">- OR -</div>
+                                                        <Input
+                                                            value={formData.profileImage || ''}
+                                                            onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
+                                                            placeholder="Enter image URL directly"
+                                                            className="h-9 text-xs"
+                                                        />
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
