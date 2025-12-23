@@ -62,8 +62,24 @@ export function HeroSection({ badge, title, subtitle, stats }: HeroSectionProps)
                                     <span className="gradient-text animate-gradient">Milton Raj</span>
                                     {title.split("Milton Raj")[1]}
                                 </>
+                            ) : title.includes("Web & Mobile") ? (
+                                <>
+                                    {title.split("Web & Mobile")[0]}
+                                    <span className="gradient-text animate-gradient">Web & Mobile</span>
+                                    {title.split("Web & Mobile")[1]}
+                                </>
                             ) : (
-                                title
+                                // Auto-gradient for last word if generic title
+                                title.split(" ").length > 1 ? (
+                                    <>
+                                        {title.split(" ").slice(0, -1).join(" ")}{" "}
+                                        <span className="gradient-text animate-gradient">
+                                            {title.split(" ").slice(-1)}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="gradient-text animate-gradient">{title}</span>
+                                )
                             )
                         ) : (
                             <>
@@ -76,7 +92,7 @@ export function HeroSection({ badge, title, subtitle, stats }: HeroSectionProps)
                     </h1>
                     {!title && (
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground/80">
-                            for Web & Mobile
+                            for <span className="gradient-text animate-gradient">Web & Mobile</span>
                         </h2>
                     )}
                 </motion.div>

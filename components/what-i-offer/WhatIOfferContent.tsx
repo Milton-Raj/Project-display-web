@@ -85,7 +85,26 @@ export function WhatIOfferContent({ content = {} }: WhatIOfferContentProps) {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold max-w-4xl mx-auto leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                        {content.heroTitle || "I build software, train teams, and help job seekers upgrade their career."}
+                        {content.heroTitle ? (
+                            content.heroTitle.includes("upgrade their career") ? (
+                                <>
+                                    {content.heroTitle.split("upgrade their career")[0]}
+                                    <span className="gradient-text">upgrade their career</span>
+                                    {content.heroTitle.split("upgrade their career")[1]}
+                                </>
+                            ) : content.heroTitle.split(" ").length > 3 ? (
+                                <>
+                                    {content.heroTitle.split(" ").slice(0, -3).join(" ")}{" "}
+                                    <span className="gradient-text">
+                                        {content.heroTitle.split(" ").slice(-3).join(" ")}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="gradient-text">{content.heroTitle}</span>
+                            )
+                        ) : (
+                            <>I build <span className="gradient-text">Software</span>, train <span className="gradient-text">Teams</span>, and help Job Seekers <span className="gradient-text">upgrade their career</span>.</>
+                        )}
                     </h1>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
