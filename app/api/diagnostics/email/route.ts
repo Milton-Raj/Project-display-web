@@ -7,15 +7,18 @@ export async function GET() {
     const user = process.env.GMAIL_USER;
     const pass = process.env.GMAIL_APP_PASSWORD;
 
+    const cleanPass = pass?.replace(/\s/g, '') || '';
+    const maskedUser = user ? `${user.substring(0, 3)}...${user.substring(user.length - 3)}` : null;
+
     if (!user || !pass) {
         return NextResponse.json({
             error: 'Credentials missing',
             hasUser: !!user,
             hasPass: !!pass,
+            maskedUser,
+            passLength: cleanPass.length
         }, { status: 500 });
     }
-
-    const cleanPass = pass.replace(/\s/g, '');
 
     try {
         const transporter = nodemailer.createTransport({
@@ -44,6 +47,8 @@ export async function GET() {
             status: 'Connection and send verified',
             messageId: info.messageId,
             response: info.response,
+            maskedUser,
+            passLength: cleanPass.length
         });
 
     } catch (error: any) {
@@ -55,6 +60,8 @@ export async function GET() {
             code: error.code,
             command: error.command,
             response: error.response,
+            maskedUser,
+            passLength: cleanPass.length,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
     }
