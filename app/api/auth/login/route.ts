@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             // Fall back to env variables if JSON file doesn't exist
             adminData = {
                 email: process.env.ADMIN_EMAIL || 'admin@admin.com',
-                passwordHash: process.env.ADMIN_PASSWORD_HASH || '$2b$10$NzP7CQeDHWshNXrg5kpCtOSb4iXRlWRoKA1uyhypOCVHuSFuaIaey',
+                passwordHash: process.env.ADMIN_PASSWORD_HASH || '$2b$10$8ZaZS9AruRuoaoRnpCehkuFdA/wJ03SGec1hsIU91gKxt49vengB.',
             };
         }
 
