@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   description: "Building scalable apps for web & mobile. Explore my portfolio of premium digital experiences.",
   keywords: ["web development", "mobile apps", "AI tools", "business solutions", "portfolio"],
   authors: [{ name: "Milton Raj" }],
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "Chrixlin",
     description: "Building scalable apps for web & mobile",

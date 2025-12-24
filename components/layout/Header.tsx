@@ -22,8 +22,12 @@ export function Header() {
             <nav className="container-custom flex items-center justify-between py-4">
                 {/* Logo */}
                 <Link href="/" className="flex items-center space-x-2 group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center glow-primary">
-                        <span className="text-xl font-bold text-white">C</span>
+                    <div className="relative w-10 h-10 flex items-center justify-center glow-primary">
+                        <img
+                            src="/logo.png"
+                            alt="Chrixlin Logo"
+                            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                        />
                     </div>
                     <span className="text-xl font-bold gradient-text-primary">
                         Chrixlin
