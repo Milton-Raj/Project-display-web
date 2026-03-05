@@ -13,7 +13,7 @@ import Link from "next/link";
 import { PROJECT_CATEGORIES, DEMO_TYPES, ProjectCategory } from "@/types/project";
 import { slugify } from "@/lib/utils";
 
-export default function EditProjectPage({ params }: { params: { id: string } }) {
+export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);

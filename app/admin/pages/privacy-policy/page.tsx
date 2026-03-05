@@ -125,7 +125,7 @@ export default function PrivacyPolicyAdmin() {
 
                                     {/* Note: since RichTextEditor implementation details are unknown in this context, falling back to a raw textarea or simplified div based on project standards can avoid breaking */}
                                     <RichTextEditor
-                                        content={formData.content || ''}
+                                        value={formData.content || ''}
                                         onChange={(html: string) => setFormData({ ...formData, content: html })}
                                         placeholder="Write your privacy policy here..."
                                     />
