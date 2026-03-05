@@ -828,3 +828,109 @@ export async function getStats() {
         engagementRate: contacts.length > 0 ? Math.round((newContacts / contacts.length) * 100) : 0,
     };
 }
+
+// ==================== BLOGS ====================
+
+import type { Blog } from '@/types/blog';
+
+export async function createBlog(blog: any) {
+    const id = blog.id || `blog_${Date.now()}`;
+    const createdAt = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+        .from('blogs')
+        .insert({
+            id,
+            title: blog.title,
+            slug: blog.slug,
+            header_image: blog.header_image || '',
+            content: blog.content || '',
+            status: blog.status || 'published',
+            created_at: createdAt,
+            updated_at: createdAt,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating blog in Supabase:', error);
+        throw error;
+    }
+
+    return mapBlogRow(data);
+}
+
+function mapBlogRow(b: any): Blog {
+    return {
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        header_image: b.header_image,
+        content: b.content,
+        status: b.status,
+        createdAt: b.created_at,
+        updatedAt: b.updated_at,
+    };
+}
+
+export async function getAllBlogs(): Promise<Blog[]> {
+    try {
+        const { data, error } = await supabase
+            .from('blogs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map(mapBlogRow);
+    } catch (error) {
+        console.error('Error getting blogs from Supabase:', error);
+        return [];
+    }
+}
+
+export async function getBlogBySlug(slug: string) {
+    const blogs = await getAllBlogs();
+    const normalizedSlug = slug.trim().toLowerCase();
+    return blogs.find(b => b.slug.trim().toLowerCase() === normalizedSlug) || null;
+}
+
+export async function updateBlog(id: string, blog: any) {
+    const updatedAt = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+        .from('blogs')
+        .update({
+            title: blog.title,
+            slug: blog.slug,
+            header_image: blog.header_image || '',
+            content: blog.content || '',
+            status: blog.status || 'published',
+            updated_at: updatedAt,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating blog in Supabase:', error);
+        throw error;
+    }
+
+    return mapBlogRow(data);
+}
+
+export async function deleteBlog(id: string) {
+    const { error } = await supabaseAdmin
+        .from('blogs')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting blog in Supabase:', error);
+        return false;
+    }
+
+    return true;
+}
+

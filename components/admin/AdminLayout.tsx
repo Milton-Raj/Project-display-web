@@ -24,6 +24,7 @@ interface AdminLayoutProps {
 const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Projects", href: "/admin/projects", icon: FolderKanban },
+    { name: "Blogs", href: "/admin/blogs", icon: FileText },
     {
         name: "Website Pages",
         icon: FileText,
