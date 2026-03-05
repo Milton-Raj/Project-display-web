@@ -482,6 +482,10 @@ function getDefaultPageContent(slug: string) {
             headerSubtitle: "Let's discuss your project",
             phone: "+919151214181",
             email: "chrixlinitsolutions@gmail.com"
+        },
+        "privacy-policy": {
+            title: "Privacy Policy",
+            content: "<h2>1. Introduction</h2><p>Welcome to Chrixlin IT Solutions. We respect your privacy and are committed to protecting your personal data...</p><h2>2. The Data We Collect</h2><p>We may collect, use, store and transfer different kinds of personal data about you...</p>",
         }
     };
 

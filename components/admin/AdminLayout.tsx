@@ -32,6 +32,7 @@ const navigation = [
             { name: "About Page", href: "/admin/pages/about" },
             { name: "What I Offer", href: "/admin/pages/what-i-offer" },
             { name: "Contact Page", href: "/admin/pages/contact" },
+            { name: "Privacy Policy", href: "/admin/pages/privacy-policy" },
         ]
     },
     { name: "Contacts", href: "/admin/contacts", icon: Mail },
