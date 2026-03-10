@@ -6,6 +6,8 @@ import { getBlogBySlug } from '@/lib/supabase-db';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+export const revalidate = 0; // Always fetch fresh from Supabase
+
 interface BlogPageProps {
     params: Promise<{
         slug: string;

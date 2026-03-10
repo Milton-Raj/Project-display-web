@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAllBlogs, createBlog } from '@/lib/supabase-db';
 import { verifyToken } from '@/lib/auth/jwt';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 export async function GET() {
     try {
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
         }
 
         const blog = await createBlog(data);
+        revalidatePath('/blogs');
         return NextResponse.json(blog, { status: 201 });
     } catch (error: any) {
         console.error('Error in blog creation API:', error);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getBlogBySlug, updateBlog, deleteBlog, getAllBlogs } from '@/lib/supabase-db';
 import { verifyToken } from '@/lib/auth/jwt';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(
     request: Request,
@@ -59,6 +60,8 @@ export async function PUT(
         }
 
         const blog = await updateBlog(id, data);
+        revalidatePath('/blogs');
+        revalidatePath(`/blogs/${blog.slug}`);
         return NextResponse.json(blog);
 
     } catch (error: any) {
@@ -97,6 +100,7 @@ export async function DELETE(
             );
         }
 
+        revalidatePath('/blogs');
         return NextResponse.json({ success: true });
 
     } catch (error) {
