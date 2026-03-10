@@ -1,7 +1,7 @@
 import { getPageContent } from "@/lib/database";
 import { WhatIOfferContent } from "@/components/what-i-offer/WhatIOfferContent";
 
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 0; // Always fetch fresh data from Supabase
 
 export const metadata = {
     title: "What I Offer | Chrixlin",

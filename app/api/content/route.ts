@@ -33,13 +33,15 @@ export async function POST(request: Request) {
         }
 
         await processPageUpdate(slug, content);
-        if (slug === 'about') {
+        if (slug === 'home') {
+            revalidatePath('/');
+        } else if (slug === 'about') {
             revalidatePath('/about');
-            revalidatePath('/'); // In case about content is used on home
+            revalidatePath('/');
         } else {
             revalidatePath(`/${slug}`);
         }
-        revalidatePath('/(public)', 'layout'); // Invalidate public layout just in case
+        revalidatePath('/(public)', 'layout');
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import { getAllBlogs } from '@/lib/supabase-db';
 import { FileText, Calendar, ArrowRight } from 'lucide-react';
 
+export const revalidate = 0; // Always fetch fresh data from Supabase
+
 export const metadata: Metadata = {
     title: 'Blog | Chrixlin IT Solutions',
     description: 'Read the latest insights and updates from Chrixlin IT Solutions.',
