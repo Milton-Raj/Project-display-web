@@ -226,7 +226,7 @@ function mapProjectRow(p: any): Project {
 
 export async function getAllProjects(): Promise<Project[]> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('projects')
             .select('*')
             .order('created_at', { ascending: false });
@@ -349,7 +349,7 @@ export async function getPageContent(slug: string) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('pages')
             .select('*')
             .eq('slug', slug)
@@ -372,7 +372,7 @@ export async function getPageContent(slug: string) {
 
 async function getAboutPage() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('about_page')
             .select('*')
             .eq('slug', 'about')
@@ -408,7 +408,7 @@ async function getAboutPage() {
 
 async function getWhatIOfferPage() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('what_i_offer_page')
             .select('*')
             .eq('slug', 'what-i-offer')
@@ -651,7 +651,7 @@ export async function updateContactPage(content: any) {
 
 async function getHomePage() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('home_page')
             .select('*')
             .eq('slug', 'home')
@@ -686,7 +686,7 @@ async function getHomePage() {
 
 export async function getContactPage() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('contact_page')
             .select('*')
             .eq('slug', 'contact')
@@ -723,7 +723,7 @@ export async function getContactPage() {
 
 export async function getSetting(key: string) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('settings')
             .select('*')
             .eq('key', key)
@@ -744,7 +744,7 @@ export async function getSetting(key: string) {
 
 export async function getAllSettings() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('settings')
             .select('*');
 
@@ -875,7 +875,7 @@ function mapBlogRow(b: any): Blog {
 
 export async function getAllBlogs(): Promise<Blog[]> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('blogs')
             .select('*')
             .order('created_at', { ascending: false });
