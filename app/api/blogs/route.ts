@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     try {
         // Verify admin authentication
         const cookieStore = await cookies();
-        const token = cookieStore.get('adminToken')?.value;
+        const token = cookieStore.get('admin_token')?.value;
         const isValid = await verifyToken(token || '');
 
         if (!isValid) {

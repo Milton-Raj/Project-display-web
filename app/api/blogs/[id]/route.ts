@@ -38,7 +38,7 @@ export async function PUT(
     try {
         // Verify admin authentication
         const cookieStore = await cookies();
-        const token = cookieStore.get('adminToken')?.value;
+        const token = cookieStore.get('admin_token')?.value;
         const isValid = await verifyToken(token || '');
 
         if (!isValid) {
@@ -77,7 +77,7 @@ export async function DELETE(
     try {
         // Verify admin authentication
         const cookieStore = await cookies();
-        const token = cookieStore.get('adminToken')?.value;
+        const token = cookieStore.get('admin_token')?.value;
         const isValid = await verifyToken(token || '');
 
         if (!isValid) {
