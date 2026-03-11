@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PROJECT_CATEGORIES, ProjectCategory, Project } from "@/types/project";
+import { PROJECT_INDUSTRIES, Project } from "@/types/project";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ interface ProjectsListProps {
 const PROJECTS_PER_PAGE = 15;
 
 export function ProjectsList({ initialProjects }: ProjectsListProps) {
-    const [selectedCategory, setSelectedCategory] = useState<ProjectCategory | "all">("all");
+    const [selectedIndustry, setSelectedIndustry] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -26,15 +26,13 @@ export function ProjectsList({ initialProjects }: ProjectsListProps) {
         return dateB - dateA; // Newest first
     });
 
-    // Filter projects based on category and search
+    // Filter projects based on industry and search
     const filteredProjects = sortedProjects.filter((project) => {
-        const matchesCategory = selectedCategory === "all" ||
-            (Array.isArray(project.category)
-                ? project.category.includes(selectedCategory as ProjectCategory)
-                : project.category === selectedCategory);
+        const matchesIndustry = selectedIndustry === "all" ||
+            (project.industry || 'other') === selectedIndustry;
         const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             project.description.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
+        return matchesIndustry && matchesSearch;
     });
 
     // Calculate pagination
@@ -44,8 +42,8 @@ export function ProjectsList({ initialProjects }: ProjectsListProps) {
     const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
 
     // Reset to page 1 when filters change
-    const handleCategoryChange = (category: ProjectCategory | "all") => {
-        setSelectedCategory(category);
+    const handleIndustryChange = (industry: string) => {
+        setSelectedIndustry(industry);
         setCurrentPage(1);
     };
 
@@ -70,29 +68,29 @@ export function ProjectsList({ initialProjects }: ProjectsListProps) {
                 </div>
             </div>
 
-            {/* Category Filters */}
+            {/* Industry Filters */}
             <div className="flex flex-wrap items-center justify-center gap-3">
                 <Button
-                    variant={selectedCategory === "all" ? "default" : "outline"}
-                    onClick={() => handleCategoryChange("all")}
+                    variant={selectedIndustry === "all" ? "default" : "outline"}
+                    onClick={() => handleIndustryChange("all")}
                     className={cn(
                         "transition-all",
-                        selectedCategory === "all" && "glow-primary"
+                        selectedIndustry === "all" && "glow-primary"
                     )}
                 >
-                    All Projects
+                    All
                 </Button>
-                {PROJECT_CATEGORIES.map((category) => (
+                {PROJECT_INDUSTRIES.map((industry) => (
                     <Button
-                        key={category.value}
-                        variant={selectedCategory === category.value ? "secondary" : "outline"}
-                        onClick={() => handleCategoryChange(category.value)}
+                        key={industry.value}
+                        variant={selectedIndustry === industry.value ? "secondary" : "outline"}
+                        onClick={() => handleIndustryChange(industry.value)}
                         className={cn(
                             "transition-all",
-                            selectedCategory === category.value && "glow-secondary"
+                            selectedIndustry === industry.value && "glow-secondary"
                         )}
                     >
-                        {category.label}
+                        {industry.label}
                     </Button>
                 ))}
             </div>

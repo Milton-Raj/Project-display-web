@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, X, Upload, Loader2, FileText, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
-import { PROJECT_CATEGORIES, DEMO_TYPES, ProjectCategory } from "@/types/project";
+import { PROJECT_CATEGORIES, DEMO_TYPES, ProjectCategory, PROJECT_INDUSTRIES } from "@/types/project";
 import { slugify } from "@/lib/utils";
 
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,8 +36,11 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         testFlightUrl: "",
         status: "live" as any,
         featured: false,
+        industry: "",
         documents: [] as { name: string; url: string; previewUrl?: string }[],
     });
+    const [customIndustry, setCustomIndustry] = useState("");
+    const [showCustomIndustry, setShowCustomIndustry] = useState(false);
     const [techInput, setTechInput] = useState("");
     const [featureInput, setFeatureInput] = useState("");
 
@@ -92,6 +95,14 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                     else if (data.project.apkUrl) setMobileDemoType('apk');
                     else if (data.project.testFlightUrl) setMobileDemoType('testflight');
                     else setMobileDemoType('none');
+
+                    // Handle custom industry (value not in predefined list)
+                    const knownIndustries = PROJECT_INDUSTRIES.map(i => i.value);
+                    const projectIndustry = data.project.industry || '';
+                    if (projectIndustry && !knownIndustries.includes(projectIndustry)) {
+                        setShowCustomIndustry(true);
+                        setCustomIndustry(projectIndustry);
+                    }
 
                 } else {
                     console.error("Project not found in response:", data);
@@ -393,6 +404,46 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                                 <label htmlFor="featured" className="text-sm font-medium">
                                     Feature this project on homepage
                                 </label>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Industry *</label>
+                                <select
+                                    required
+                                    value={showCustomIndustry ? "__custom__" : formData.industry}
+                                    onChange={(e) => {
+                                        if (e.target.value === "__custom__") {
+                                            setShowCustomIndustry(true);
+                                            setFormData({ ...formData, industry: customIndustry });
+                                        } else {
+                                            setShowCustomIndustry(false);
+                                            setCustomIndustry("");
+                                            setFormData({ ...formData, industry: e.target.value });
+                                        }
+                                    }}
+                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                >
+                                    <option value="" disabled>Select Industry</option>
+                                    {PROJECT_INDUSTRIES.map((ind) => (
+                                        <option key={ind.value} value={ind.value}>{ind.label}</option>
+                                    ))}
+                                    <option value="__custom__">+ Add Custom Industry</option>
+                                </select>
+                                {showCustomIndustry && (
+                                    <div className="flex gap-2 mt-2">
+                                        <input
+                                            type="text"
+                                            required
+                                            value={customIndustry}
+                                            onChange={(e) => {
+                                                setCustomIndustry(e.target.value);
+                                                setFormData({ ...formData, industry: e.target.value });
+                                            }}
+                                            placeholder="Enter custom industry name"
+                                            className="flex-1 h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, X, Upload, Loader2, FileText, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 // Removed Firebase imports - using API routes and URL inputs instead
-import { PROJECT_CATEGORIES, DEMO_TYPES, ProjectCategory } from "@/types/project";
+import { PROJECT_CATEGORIES, DEMO_TYPES, ProjectCategory, PROJECT_INDUSTRIES } from "@/types/project";
 import { slugify } from "@/lib/utils";
 
 export default function NewProjectPage() {
@@ -35,8 +35,11 @@ export default function NewProjectPage() {
         demoType: "web" as any,
         status: "live" as any,
         featured: false,
+        industry: "",
         documents: [] as { name: string; url: string; previewUrl?: string }[],
     });
+    const [customIndustry, setCustomIndustry] = useState("");
+    const [showCustomIndustry, setShowCustomIndustry] = useState(false);
     const [techInput, setTechInput] = useState("");
     const [featureInput, setFeatureInput] = useState("");
 
@@ -372,6 +375,46 @@ export default function NewProjectPage() {
                                 <label htmlFor="featured" className="text-sm font-medium">
                                     Feature this project on homepage
                                 </label>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Industry *</label>
+                                <select
+                                    required
+                                    value={showCustomIndustry ? "__custom__" : formData.industry}
+                                    onChange={(e) => {
+                                        if (e.target.value === "__custom__") {
+                                            setShowCustomIndustry(true);
+                                            setFormData({ ...formData, industry: customIndustry });
+                                        } else {
+                                            setShowCustomIndustry(false);
+                                            setCustomIndustry("");
+                                            setFormData({ ...formData, industry: e.target.value });
+                                        }
+                                    }}
+                                    className="w-full h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                >
+                                    <option value="" disabled>Select Industry</option>
+                                    {PROJECT_INDUSTRIES.map((ind) => (
+                                        <option key={ind.value} value={ind.value}>{ind.label}</option>
+                                    ))}
+                                    <option value="__custom__">+ Add Custom Industry</option>
+                                </select>
+                                {showCustomIndustry && (
+                                    <div className="flex gap-2 mt-2">
+                                        <input
+                                            type="text"
+                                            required
+                                            value={customIndustry}
+                                            onChange={(e) => {
+                                                setCustomIndustry(e.target.value);
+                                                setFormData({ ...formData, industry: e.target.value });
+                                            }}
+                                            placeholder="Enter custom industry name"
+                                            className="flex-1 h-11 rounded-xl border border-input bg-background/50 px-4 py-2 text-sm"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

@@ -181,6 +181,7 @@ export async function createProject(project: any) {
             test_flight_url: project.testFlightUrl || '',
             demo_type: project.demoType || 'none',
             status: project.status || 'live',
+            industry: project.industry || 'other',
         })
         .select()
         .single();
@@ -221,6 +222,7 @@ function mapProjectRow(p: any): Project {
         demoType: p.demo_type,
         status: p.status,
         views: p.views || 0,
+        industry: p.industry || 'other',
     };
 }
 
@@ -299,6 +301,7 @@ export async function updateProject(id: string, updates: any) {
     if (updates.testFlightUrl !== undefined) payload.test_flight_url = updates.testFlightUrl;
     if (updates.demoType !== undefined) payload.demo_type = updates.demoType;
     if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.industry !== undefined) payload.industry = updates.industry;
 
     const { data, error } = await supabaseAdmin
         .from('projects')

@@ -5,6 +5,7 @@ export interface Project {
     description: string;
     longDescription?: string;
     category: ProjectCategory | ProjectCategory[]; // Support both single and multiple categories
+    industry: string; // Industry sector (e.g., Healthcare, Finance, etc.)
     technologies: string[]; // Alias for techStack
     techStack: string[];
     features: string[];
@@ -46,6 +47,7 @@ export interface ProjectFormData {
     description: string;
     longDescription?: string;
     category: ProjectCategory | ProjectCategory[];
+    industry: string;
     techStack: string[];
     features: string[];
     demoUrl?: string; // Live Web Demo
@@ -64,6 +66,33 @@ export const PROJECT_CATEGORIES: { value: ProjectCategory; label: string }[] = [
     { value: 'mobile-app', label: 'Mobile Apps' },
     { value: 'ai-tool', label: 'AI Tools' },
     { value: 'business-tool', label: 'Business Tools' },
+    { value: 'other', label: 'Other' },
+];
+
+export type ProjectIndustry =
+    | 'healthcare'
+    | 'finance'
+    | 'e-commerce'
+    | 'manufacturing'
+    | 'education'
+    | 'it-software'
+    | 'hospitality'
+    | 'logistics'
+    | 'legal'
+    | 'marketing'
+    | 'other';
+
+export const PROJECT_INDUSTRIES: { value: string; label: string }[] = [
+    { value: 'healthcare', label: 'Healthcare' },
+    { value: 'finance', label: 'Finance' },
+    { value: 'e-commerce', label: 'E-Commerce' },
+    { value: 'manufacturing', label: 'Manufacturing' },
+    { value: 'education', label: 'Education' },
+    { value: 'it-software', label: 'IT & Software' },
+    { value: 'hospitality', label: 'Hospitality' },
+    { value: 'logistics', label: 'Logistics' },
+    { value: 'legal', label: 'Legal' },
+    { value: 'marketing', label: 'Marketing' },
     { value: 'other', label: 'Other' },
 ];
 
