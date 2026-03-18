@@ -811,6 +811,49 @@ export async function getAdminEmail() {
     return setting?.value || null;
 }
 
+// Nav Visibility Management
+const NAV_ITEMS = ['home', 'projects', 'about', 'what-i-offer', 'blogs', 'contact'] as const;
+export type NavItemKey = typeof NAV_ITEMS[number];
+
+export async function getNavVisibility(): Promise<Record<NavItemKey, boolean>> {
+    const defaults: Record<NavItemKey, boolean> = {
+        home: true,
+        projects: true,
+        about: true,
+        'what-i-offer': true,
+        blogs: true,
+        contact: true,
+    };
+
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('settings')
+            .select('key, value')
+            .like('key', 'nav_%_enabled');
+
+        if (error || !data) return defaults;
+
+        const result = { ...defaults };
+        data.forEach(row => {
+            const match = row.key.match(/^nav_(.+)_enabled$/);
+            if (match) {
+                const key = match[1].replace(/_/g, '-') as NavItemKey;
+                if (key in result) {
+                    result[key] = row.value === 'true';
+                }
+            }
+        });
+        return result;
+    } catch {
+        return defaults;
+    }
+}
+
+export async function updateNavVisibility(item: NavItemKey, enabled: boolean) {
+    const key = `nav_${item.replace(/-/g, '_')}_enabled`;
+    return updateSetting(key, String(enabled));
+}
+
 // ==================== STATS ====================
 
 export async function getStats() {
